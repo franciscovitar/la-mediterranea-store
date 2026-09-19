@@ -93,7 +93,12 @@ img { display: block; max-width: 100%; }
 .size-options button.is-selected { border-color: var(--ink); background: var(--ink); color: white; }
 .product-note { margin: -3px 0 0; color: var(--ink-soft); font-size: 10px; font-style: italic; }
 .product-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 2px; }
-.product-bottom strong { font-size: 18px; letter-spacing: -0.025em; }
+.product-price { color: var(--orange); font-size: 18px; letter-spacing: -0.025em; }
+.product-buy-controls { display: flex; align-items: center; gap: 8px; }
+.product-quantity { display: inline-grid; grid-template-columns: 28px 28px 28px; align-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: white; text-align: center; }
+.product-quantity button { height: 30px; border: 0; background: var(--cream-2); cursor: pointer; font-size: 15px; font-weight: 800; }
+.product-quantity button:disabled { cursor: default; opacity: .38; }
+.product-quantity span { font-size: 11px; font-weight: 850; }
 .add-button { min-width: 90px; border: 0; border-radius: 11px; padding: 9px 12px; background: var(--ink); color: white; cursor: pointer; font-size: 12px; font-weight: 850; transition: transform .15s ease, background .15s ease; }
 .add-button:active { transform: scale(0.97); }
 
@@ -195,8 +200,10 @@ footer { padding: 28px 0 104px; background: #17100e; color: #a99d97; }
   .size-options button { min-width: 29px; height: 27px; font-size: 9px; }
   .product-note { font-size: 8.5px; }
   .product-bottom { align-items: stretch; flex-direction: column; }
-  .product-bottom strong { font-size: 15px; }
-  .add-button { width: 100%; min-width: 0; }
+  .product-price { font-size: 15px; }
+  .product-buy-controls { width: 100%; }
+  .product-quantity { flex: 0 0 auto; grid-template-columns: 27px 27px 27px; }
+  .add-button { flex: 1; min-width: 0; }
   .about { padding: 65px 0; }
   footer { padding-bottom: 100px; }
 }
