@@ -11,17 +11,20 @@ export type AddToCartPayload = {
   colorLabel?: string;
   size?: string;
   image: string;
+  quantity: number;
 };
 
 export function ProductCard({ product, onAdd }: { product: Product; onAdd: (payload: AddToCartPayload) => void }) {
   const [colorKey, setColorKey] = useState(product.colors?.[0]?.key);
   const [size, setSize] = useState(product.sizes?.[0]);
   const [justAdded, setJustAdded] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const selectedColor = useMemo(() => product.colors?.find((color) => color.key === colorKey), [colorKey, product.colors]);
   const image = selectedColor?.image ?? product.image;
 
   function addProduct() {
-    onAdd({ product, colorKey: selectedColor?.key, colorLabel: selectedColor?.label, size, image });
+    onAdd({ product, colorKey: selectedColor?.key, colorLabel: selectedColor?.label, size, image, quantity });
+    setQuantity(1);
     setJustAdded(true);
     window.setTimeout(() => setJustAdded(false), 900);
   }
@@ -71,8 +74,15 @@ export function ProductCard({ product, onAdd }: { product: Product; onAdd: (payl
         ) : null}
         {product.note ? <p className="product-note">{product.note}</p> : null}
         <div className="product-bottom">
-          <strong>{formatMoney(product.price)}</strong>
-          <button className="add-button" onClick={addProduct} type="button">{justAdded ? "Agregado ✓" : "Agregar"}</button>
+          <strong className="product-price">{formatMoney(product.price)}</strong>
+          <div className="product-buy-controls">
+            <div className="product-quantity" aria-label={`Cantidad de ${product.name}`}>
+              <button aria-label="Restar uno" disabled={quantity === 1} onClick={() => setQuantity((current) => Math.max(1, current - 1))} type="button">−</button>
+              <span aria-live="polite">{quantity}</span>
+              <button aria-label="Sumar uno" disabled={quantity === 99} onClick={() => setQuantity((current) => Math.min(99, current + 1))} type="button">+</button>
+            </div>
+            <button className="add-button" onClick={addProduct} type="button">{justAdded ? "Agregado ✓" : "Agregar"}</button>
+          </div>
         </div>
       </div>
     </article>
