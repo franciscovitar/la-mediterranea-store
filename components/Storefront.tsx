@@ -35,7 +35,17 @@ export function Storefront() {
 
   useEffect(() => {
     document.body.classList.toggle("cart-is-open", cartOpen);
-    return () => document.body.classList.remove("cart-is-open");
+    if (!cartOpen) return () => document.body.classList.remove("cart-is-open");
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setCartOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.classList.remove("cart-is-open");
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [cartOpen]);
 
   const visibleProducts = useMemo(
