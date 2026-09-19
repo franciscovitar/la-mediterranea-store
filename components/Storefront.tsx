@@ -61,14 +61,14 @@ export function Storefront() {
     setCart((current) => {
       const found = current.find((line) => line.key === key);
       if (found) {
-        return current.map((line) => line.key === key ? { ...line, quantity: line.quantity + 1 } : line);
+        return current.map((line) => line.key === key ? { ...line, quantity: line.quantity + payload.quantity } : line);
       }
       return [...current, {
         key,
         productId: payload.product.id,
         name: payload.product.name,
         price: payload.product.price,
-        quantity: 1,
+        quantity: payload.quantity,
         image: payload.image,
         colorLabel: payload.colorLabel,
         size: payload.size,
