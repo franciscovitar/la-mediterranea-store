@@ -1,0 +1,27 @@
+[
+  {"id":"botella","category":"Botellas","name":"Botella de aluminio","price":22000,"description":"Aluminio resistente, diseño La Mediterránea.","image":"/products/botella.jpg","active":true},
+  {"id":"taza_mediterranea","category":"Tazas","name":"Taza Mediterránea","price":20000,"description":"Taza de cerámica blanca con el logo La Mediterránea.","image":"/products/taza_mediterranea.jpg","active":true},
+  {"id":"vaso_termico","category":"Vasos térmicos","name":"Vaso térmico de aluminio","price":20000,"description":"Con bombilla y tapa.","image":"/products/vaso_termico.jpg","active":true},
+  {"id":"gorra_trucker","category":"Gorras","name":"Gorra trucker","price":10000,"description":"Media malla, bordado del logo La Mediterránea.","image":"/products/gorra_trucker.jpg","active":true},
+  {"id":"gorra_gabardina","category":"Gorras","name":"Gorra gabardina","price":12000,"description":"Gabardina clásica, bordado del logo La Mediterránea.","image":"/products/gorra_gabardina.jpg","active":true},
+  {"id":"gorra_m_chica","category":"Gorras","name":"Gorra clásica","price":12000,"description":"Gorra estructurada, logo bordado al frente.","image":"/products/gorra_m_chica.jpg","active":true},
+  {"id":"remera_sublimada","category":"Remeras","name":"Remera estampada de jersey de algodón","price":20000,"description":"Todos los talles · varios colores.","image":"/products/remera_med_negra.jpg","note":"Todos los talles disponibles.","colors":[
+    {"key":"negra","label":"Negra","swatch":"#1a1a1a","image":"/products/remera_med_negra.jpg"},
+    {"key":"bordo","label":"Bordó","swatch":"#7a1f2b","image":"/products/remera_med_bordo.jpg"},
+    {"key":"blanca","label":"Blanca","swatch":"#f5f5f0","image":"/products/remera_med_blanca.jpg"},
+    {"key":"beige","label":"Beige","swatch":"#ddd0b8","image":"/products/remera_med_beige.jpg"},
+    {"key":"azul","label":"Azul marino","swatch":"#1b2338","image":"/products/remera_med_azul.jpg"}],"active":true},
+  {"id":"remera_algodon","category":"Remeras","name":"Remera estampada de jersey de algodón","price":20000,"description":"Muy buena calidad · varios colores y talles.","image":"/products/remera_m_beige.jpg","colors":[
+    {"key":"beige","label":"Beige","swatch":"#ddd0b8","image":"/products/remera_m_beige.jpg"},
+    {"key":"bordo","label":"Bordó","swatch":"#7a1f2b","image":"/products/remera_m_bordo.jpg"},
+    {"key":"gris","label":"Gris","swatch":"#b9b7bc","image":"/products/remera_m_gris.jpg"},
+    {"key":"azul","label":"Azul marino","swatch":"#1b2338","image":"/products/remera_m_azul.jpg"}],"sizes":["S","M","L","XL"],"active":true},
+  {"id":"remera_uniforme","category":"Remeras","name":"Remera uniforme","price":9000,"description":"Remera oficial de uniforme, logo grande al frente.","image":"/products/remera_uniforme_negra.jpg","colors":[
+    {"key":"negra","label":"Negra","swatch":"#1a1a1a","image":"/products/remera_uniforme_negra.jpg"},
+    {"key":"blanca","label":"Blanca","swatch":"#f5f5f0","image":"/products/remera_uniforme_blanca.jpg"}],"sizes":["S","M","L","XL"],"active":true},
+  {"id":"buzo_capucha_negro","category":"Buzos","name":"Buzo con capucha — negro","price":35000,"description":"Con capucha y bolsillo canguro.","image":"/products/buzo_capucha_negro_new.jpg","active":true},
+  {"id":"buzo_sin_capucha_negro","category":"Buzos","name":"Buzo sin capucha — negro","price":34000,"description":"Cuello redondo, sin capucha.","image":"/products/buzo_sin_capucha_negro_new.jpg","active":true},
+  {"id":"buzo_capucha_azul","category":"Buzos","name":"Buzo con capucha — azul marino","price":42000,"description":"Con capucha y bolsillo canguro.","image":"/products/buzo_capucha_azul_new.jpg","active":true},
+  {"id":"buzo_sin_capucha_azul","category":"Buzos","name":"Buzo sin capucha — azul marino","price":40000,"description":"Cuello redondo, sin capucha.","image":"/products/buzo_sin_capucha_azul_new.jpg","active":true},
+  {"id":"tote_bag","category":"Tote Bags","name":"Tote bag de lienzo de algodón","price":12000,"description":"30 × 40 cm · lienzo de algodón natural.","image":"/products/tote_bag.jpg","active":true}
+]
