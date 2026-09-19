@@ -25,7 +25,7 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear }: 
   return (
     <>
       <button aria-hidden={!open} aria-label="Cerrar carrito" className={`cart-backdrop ${open ? "is-open" : ""}`} onClick={onClose} tabIndex={open ? 0 : -1} type="button" />
-      <aside aria-hidden={!open} aria-label="Carrito" className={`cart-drawer ${open ? "is-open" : ""}`}>
+      <aside aria-hidden={!open} aria-label="Carrito" aria-modal="true" className={`cart-drawer ${open ? "is-open" : ""}`} inert={!open} role="dialog">
         <div className="cart-head">
           <div><span className="eyebrow">Tu selección</span><h2>Carrito</h2></div>
           <button aria-label="Cerrar carrito" className="icon-button" onClick={onClose} type="button">×</button>
