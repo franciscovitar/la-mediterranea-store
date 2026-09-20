@@ -9,6 +9,7 @@ export type CartLine = {
   price: number;
   quantity: number;
   image: string;
+  colorKey?: string;
   colorLabel?: string;
   size?: string;
 };
@@ -57,8 +58,8 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear }: 
           {lines.length ? (
             <>
               <div className="cart-total"><span>Total</span><strong>{formatMoney(total)}</strong></div>
-              <button className="checkout-button" disabled type="button">Finalizar compra</button>
-              <p className="cart-pending">El checkout y el pago online se conectan en la próxima etapa.</p>
+              <a className="checkout-button" href="/checkout">Finalizar compra</a>
+              <p className="cart-pending">Revisá el pedido antes de pasar al pago.</p>
               <button className="text-button clear-cart" onClick={onClear} type="button">Vaciar carrito</button>
             </>
           ) : <button className="browse-button" onClick={onClose} type="button">Seguir viendo productos</button>}
