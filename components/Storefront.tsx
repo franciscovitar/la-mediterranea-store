@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CartDrawer, type CartLine } from "@/components/CartDrawer";
 import { ProductCard, type AddToCartPayload } from "@/components/ProductCard";
 import { activeProducts, categories, formatMoney } from "@/lib/products";
-
-const CART_STORAGE_KEY = "la-mediterranea-cart-v1";
+import { CART_STORAGE_KEY } from "@/lib/commerce/cart";
 
 function lineKey(payload: AddToCartPayload) {
   return [payload.product.id, payload.colorKey ?? "", payload.size ?? ""].join("|");
@@ -70,6 +69,7 @@ export function Storefront() {
         price: payload.product.price,
         quantity: payload.quantity,
         image: payload.image,
+        colorKey: payload.colorKey,
         colorLabel: payload.colorLabel,
         size: payload.size,
       }];

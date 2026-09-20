@@ -1,0 +1,57 @@
+# Integration-ready checkpoint
+
+This checkpoint intentionally prepares the commerce backend without pretending Supabase or Mercado Pago are already connected.
+
+## Why this exists
+
+The storefront should not be rewritten when the client accounts arrive. The browser cart remains a convenience UI, but prices, orders and payment state are designed to become server-authoritative.
+
+## Supabase connection
+
+Use the client's own Supabase organization/project.
+
+1. Create the project.
+2. Apply `supabase/migrations/20260920_001_commerce.sql`.
+3. Apply `supabase/seed.sql`.
+4. Create the first administrator with Supabase Auth.
+5. Insert that Auth user UUID into `public.admin_users`.
+6. Add inventory rows only for variants/products where stock should be tracked.
+7. Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` in the deployment environment.
+
+The application uses the 2026 Supabase key model: publishable keys are safe for low-privilege public/authenticated clients when RLS is correct; the secret key stays server-only and bypasses RLS.
+
+## Mercado Pago connection
+
+The adapter is prepared for **Checkout Pro via Orders API**.
+
+1. Create/select the client's Mercado Pago application.
+2. Configure `MERCADOPAGO_ACCESS_TOKEN` server-side.
+3. Configure `NEXT_PUBLIC_SITE_URL` with the HTTPS production URL.
+4. Configure the webhook URL as `https://YOUR_DOMAIN/api/webhooks/mercadopago`.
+5. Configure `MERCADOPAGO_WEBHOOK_SECRET` server-side.
+6. Run a test purchase and a simulated webhook.
+7. Verify the local order transitions to the provider status and stock only changes on an accredited event.
+
+The server sends an `X-Idempotency-Key` when creating the Mercado Pago order. The webhook verifies the HMAC signature and then fetches the provider order directly before mutating the local order.
+
+## Current safe behavior without credentials
+
+- The catalog and cart keep working.
+- `/checkout` recalculates the order from server-owned catalog data.
+- The real pay button stays disabled.
+- `/admin` shows readiness but does not expose fake/insecure edit forms.
+- No secret values are committed.
+
+## Important production gate
+
+Do not call payments, stock or admin "done" merely because environment variables exist. Before launch, verify:
+
+- database migration applied;
+- RLS/admin authorization tested;
+- real/test Mercado Pago order creation works;
+- signed webhook is received;
+- provider status is fetched server-side;
+- duplicate checkout attempts do not create duplicate provider orders;
+- payment success does not depend on return-page query parameters;
+- stock behavior is tested with tracked and untracked products;
+- HTTPS production deployment is live.
