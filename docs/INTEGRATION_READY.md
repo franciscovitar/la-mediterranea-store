@@ -60,3 +60,8 @@ Do not call payments, stock or admin "done" merely because environment variables
 ## Backup and recovery
 
 Before changing the backend integration, download the full admin backup from `/admin`. The same panel can restore that backup into local draft mode, so catalog and stock preparation are recoverable before Supabase becomes canonical.
+
+
+## Mercado Pago status coverage
+
+The prepared order-state mapping covers the current Checkout Pro Orders lifecycle used by the integration: created/processing/action-required states remain pending, processed+accredited becomes paid after amount/stock validation, failed/canceled become payment failure, and both documented full-refund forms are recorded as refunded. External refund automation/restocking remains intentionally outside V1.

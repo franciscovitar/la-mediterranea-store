@@ -389,13 +389,14 @@ begin
         v_new_status := 'paid';
       end if;
     end if;
-  elsif p_status = 'processed' and p_status_detail = 'refunded' then
+  elsif (p_status = 'processed' and p_status_detail = 'refunded')
+     or (p_status = 'refunded' and p_status_detail = 'refunded') then
     v_new_status := 'refunded';
   elsif p_status = 'processed' and p_status_detail = 'partially_refunded' then
     v_new_status := 'partially_refunded';
   elsif p_status in ('failed', 'canceled') and v_current_status not in ('paid','refunded','partially_refunded') then
     v_new_status := 'payment_failed';
-  elsif p_status in ('created', 'action_required') and v_current_status not in ('paid','refunded','partially_refunded') then
+  elsif p_status in ('created', 'processing', 'action_required') and v_current_status not in ('paid','refunded','partially_refunded') then
     v_new_status := 'payment_pending';
   end if;
 

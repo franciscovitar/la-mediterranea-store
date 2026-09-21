@@ -71,3 +71,5 @@ Without external credentials, a customer can browse the full catalog, choose var
 - Node.js 22.x is declared to match CI.
 
 - Saved carts are reconciled against the current catalog on load, so stale prices, removed products or invalid variants cannot linger in the visible cart.
+
+- Mercado Pago order-state mapping includes current processing and full-refund status forms while keeping refund restocking outside V1.
