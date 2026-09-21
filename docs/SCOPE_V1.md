@@ -62,3 +62,10 @@ Without external credentials, a customer can browse the full catalog, choose var
 - Admin, checkout and API routes are excluded from search indexing where appropriate.
 - A minimal `/api/health` endpoint is available for deployment smoke checks.
 - The production handoff checklist documents the remaining external gates.
+
+## Final technical polish before external accounts
+- Checkout and webhook JSON requests enforce content type and bounded request size.
+- Commerce responses use `no-store` caching.
+- Public sitemap generation is prepared from the production site URL.
+- App icon is wired from the existing brand asset.
+- Node.js 22.x is declared to match CI.

@@ -34,6 +34,7 @@ This checklist is the final gate between the prepared local/integration-ready bu
 - Add environment variables in the host's secret settings.
 - Confirm `/api/health` returns `ok: true`.
 - Confirm admin and checkout routes are not indexable.
+- Generate and commit `package-lock.json` from the final dependency set, then use reproducible installs for release CI/deploys.
 - Run `npm run check` against the release candidate.
 - Test desktop and mobile.
 - Verify product images and all return URLs over HTTPS.
