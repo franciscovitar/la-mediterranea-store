@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CART_STORAGE_KEY, CHECKOUT_REQUEST_STORAGE_KEY, reconcileCart, type CartLine } from "@/lib/commerce/cart";
 import { checkoutFingerprint, readStoredCheckoutRequest } from "@/lib/commerce/idempotency";
-import { formatMoney, products as baseProducts } from "@/lib/products";
+import { formatMoney, type Product } from "@/lib/products";
 
 type Quote = {
   currency: "ARS";
@@ -42,38 +42,27 @@ export function CheckoutClient() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
 
-  const requestLines = useMemo(() => cart.map((line) => ({
-    productId: line.productId,
-    colorKey: line.colorKey,
-    colorLabel: line.colorLabel,
-    size: line.size,
-    quantity: line.quantity,
-  })), [cart]);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(CART_STORAGE_KEY);
-      const reconciled = saved ? reconcileCart(JSON.parse(saved), baseProducts) : [];
-      setCart(reconciled);
-      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(reconciled));
-    } catch {
-      setCart([]);
-    }
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
       setError("");
       try {
+        const catalogResponse = await fetch("/api/catalog", { cache: "no-store" });
+        const catalogData = await catalogResponse.json() as { products?: Product[]; error?: string };
+        if (!catalogResponse.ok || !catalogData.products) throw new Error(catalogData.error ?? "No se pudo leer el catálogo.");
+        const saved = window.localStorage.getItem(CART_STORAGE_KEY);
+        const reconciled = saved ? reconcileCart(JSON.parse(saved), catalogData.products) : [];
+        if (!cancelled) setCart(reconciled);
+        window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(reconciled));
+        const lines = reconciled.map((line) => ({ productId: line.productId, colorKey: line.colorKey, colorLabel: line.colorLabel, size: line.size, quantity: line.quantity }));
         const [readinessResponse, quoteResponse] = await Promise.all([
           fetch("/api/integrations/readiness", { cache: "no-store" }),
-          requestLines.length
+          lines.length
             ? fetch("/api/checkout/quote", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ lines: requestLines }),
+                body: JSON.stringify({ lines }),
               })
             : Promise.resolve(null),
         ]);
@@ -96,7 +85,7 @@ export function CheckoutClient() {
     }
     load();
     return () => { cancelled = true; };
-  }, [requestLines]);
+  }, []);
 
   async function startPayment() {
     if (!readiness?.checkoutReady || !quote?.lines.length) return;

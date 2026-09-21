@@ -1,6 +1,6 @@
 # Integration-ready checkpoint
 
-This checkpoint intentionally prepares the commerce backend without pretending Supabase or Mercado Pago are already connected.
+Supabase is connected. Mercado Pago remains intentionally disconnected until its real credentials are available.
 
 ## Why this exists
 
@@ -8,15 +8,12 @@ The storefront should not be rewritten when the client accounts arrive. The brow
 
 ## Supabase connection
 
-Use the client's own Supabase organization/project.
+Project `urmbjxmijtwovkzmvoav` is the current backend of record.
 
-1. Create the project.
-2. Apply `supabase/migrations/20260920_001_commerce.sql`.
-3. Apply `supabase/seed.sql`.
-4. Create the first administrator with Supabase Auth.
-5. Insert that Auth user UUID into `public.admin_users`.
-6. Add inventory rows only for variants/products where stock should be tracked.
-7. Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` in the deployment environment.
+1. Migrations in `supabase/migrations` and the checked-in catalog seed have been applied.
+2. The first Magic Link administrator is registered in `public.admin_users`.
+3. Add inventory rows only where stock tracking is desired; no quantities were invented.
+4. Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_URL` and `SUPABASE_SECRET_KEY` in the production host's secret settings.
 
 The application uses the 2026 Supabase key model: publishable keys are safe for low-privilege public/authenticated clients when RLS is correct; the secret key stays server-only and bypasses RLS.
 
@@ -36,10 +33,11 @@ The server sends an `X-Idempotency-Key` when creating the Mercado Pago order. Th
 
 ## Current safe behavior without credentials
 
-- The catalog and cart keep working.
-- `/checkout` recalculates the order from server-owned catalog data.
-- The real pay button stays disabled.
-- `/admin` includes a functional local-draft workspace for products and stock. It intentionally does not publish or write to a remote database until Supabase Auth is connected.\n- Draft products can be exported/imported as JSON and draft stock can be exported as CSV.\n- `/admin/preview` renders the saved draft through the real storefront UI while keeping checkout disabled.\n- The admin can export one backup file and an initial Supabase SQL import so prepared work does not need to be re-entered.
+- The storefront reads the active catalog from Supabase and reconciles saved carts against it.
+- `/checkout` recalculates the order from the server-owned Supabase catalog.
+- The real pay button stays disabled because Mercado Pago is not configured.
+- `/admin` requires Magic Link authentication and persists product, stock and image changes through Supabase RLS/Storage.
+- `/admin/preview` remains available only as a local draft-recovery tool; it is not the operational catalog.
 - No secret values are committed.
 
 ## Important production gate

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CheckoutValidationError, quoteCheckout } from "../lib/commerce/checkout";
+import { CheckoutValidationError, quoteCheckout, quoteCheckoutFromCatalog } from "../lib/commerce/checkout";
 
 test("checkout recalculates prices from the server catalog", () => {
   const quote = quoteCheckout([{ productId: "botella", quantity: 2, price: 1 }]);
@@ -23,6 +23,20 @@ test("checkout rejects an invalid size", () => {
     () => quoteCheckout([{ productId: "remera_algodon", size: "XXXL", colorKey: "beige", quantity: 1 }]),
     CheckoutValidationError,
   );
+});
+
+test("checkout uses the supplied canonical catalog rather than browser prices", () => {
+  const quote = quoteCheckoutFromCatalog([{
+    productId: "real", quantity: 2, price: 1,
+  }], [{ id: "real", category: "A", name: "Real", price: 3456, description: "", image: "/real.jpg", active: true }]);
+  assert.equal(quote.total, 6912);
+});
+
+test("checkout rejects products made inactive in the canonical catalog", () => {
+  assert.throws(() => quoteCheckoutFromCatalog(
+    [{ productId: "hidden", quantity: 1 }],
+    [{ id: "hidden", category: "A", name: "Hidden", price: 1, description: "", image: "/hidden.jpg", active: false }],
+  ), CheckoutValidationError);
 });
 
 import { checkoutFingerprint, readStoredCheckoutRequest } from "../lib/commerce/idempotency";
