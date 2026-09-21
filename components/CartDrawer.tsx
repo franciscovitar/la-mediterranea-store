@@ -14,13 +14,15 @@ export type CartLine = {
   size?: string;
 };
 
-export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear }: {
+export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, checkoutHref = "/checkout", checkoutNote }: {
   lines: CartLine[];
   open: boolean;
   onClose: () => void;
   onStep: (key: string, delta: number) => void;
   onRemove: (key: string) => void;
   onClear: () => void;
+  checkoutHref?: string | null;
+  checkoutNote?: string;
 }) {
   const total = lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
   return (
@@ -58,8 +60,12 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear }: 
           {lines.length ? (
             <>
               <div className="cart-total"><span>Total</span><strong>{formatMoney(total)}</strong></div>
-              <a className="checkout-button" href="/checkout">Finalizar compra</a>
-              <p className="cart-pending">Revisá el pedido antes de pasar al pago.</p>
+              {checkoutHref ? (
+                <a className="checkout-button" href={checkoutHref}>Finalizar compra</a>
+              ) : (
+                <button className="checkout-button" disabled type="button">Checkout desactivado</button>
+              )}
+              <p className="cart-pending">{checkoutNote ?? "Revisá el pedido antes de pasar al pago."}</p>
               <button className="text-button clear-cart" onClick={onClear} type="button">Vaciar carrito</button>
             </>
           ) : <button className="browse-button" onClick={onClose} type="button">Seguir viendo productos</button>}
