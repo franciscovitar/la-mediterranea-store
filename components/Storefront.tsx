@@ -107,8 +107,8 @@ export function Storefront({
       {previewMode ? (
         <div className="draft-preview-strip">
           <div className="container">
-            <strong>Vista previa del borrador</strong>
-            <span>Estos cambios todavía no están publicados.</span>
+            <strong>Vista previa del catálogo real</strong>
+            <span>El checkout está desactivado en esta vista administrativa.</span>
             <a href="/admin">Volver al panel</a>
           </div>
         </div>
@@ -224,7 +224,7 @@ export function Storefront({
         onRemove={(key) => setCart((current) => current.filter((line) => line.key !== key))}
         onStep={stepLine}
         checkoutHref={checkoutHref}
-        checkoutNote={previewMode ? "El checkout está desactivado en la vista previa del borrador." : undefined}
+        checkoutNote={previewMode ? "El checkout está desactivado en la vista previa administrativa." : undefined}
         open={cartOpen}
       />
     </>

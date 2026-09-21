@@ -37,7 +37,8 @@ The server sends an `X-Idempotency-Key` when creating the Mercado Pago order. Th
 - `/checkout` recalculates the order from the server-owned Supabase catalog.
 - The real pay button stays disabled because Mercado Pago is not configured.
 - `/admin` requires Magic Link authentication and persists product, stock and image changes through Supabase RLS/Storage.
-- `/admin/preview` remains available only as a local draft-recovery tool; it is not the operational catalog.
+- `/auth/confirm` verifies the Magic Link `token_hash` and writes the SSR session cookies before redirecting to `/admin`.
+- `/admin/preview` is admin-protected and reads the real Supabase catalog; checkout stays disabled there.
 - No secret values are committed.
 
 ## Important production gate
@@ -57,7 +58,11 @@ Do not call payments, stock or admin "done" merely because environment variables
 
 ## Backup and recovery
 
-Before changing the backend integration, download the full admin backup from `/admin`. The same panel can restore that backup into local draft mode, so catalog and stock preparation are recoverable before Supabase becomes canonical.
+Before changing operational data, download the full admin backup from `/admin`. The same panel can restore a validated backup to Supabase only after an explicit administrator confirmation.
+
+## Production email delivery
+
+Magic Link SSR was validated locally with Resend's test sender and the temporary permitted recipient. Before `franvitar15@gmail.com` can receive production Magic Links, verify a sending domain in Resend (or configure the definitive SMTP sender).
 
 
 ## Mercado Pago status coverage

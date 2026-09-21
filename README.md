@@ -20,7 +20,11 @@ The storefront reads its operational catalog from Supabase and keeps the client 
 - Magic Link authentication protects `/admin`; database RLS enforces the administrator role.
 - Mercado Pago Checkout Pro Orders API adapter prepared behind environment variables.
 - Signed Mercado Pago webhook endpoint prepared.
-- Integration readiness endpoint and admin connection-status page.\n- Local-draft admin workspace for adding/editing products, preparing variants and drafting stock before Supabase is connected.\n- Draft storefront preview, portable admin backup and generated initial Supabase SQL.\n- Unit tests for server-side checkout validation and draft/export helpers.\n- Idempotency fingerprinting so a changed cart/email cannot accidentally reuse an older payment order.\n- Basic security headers plus safe 404/error states.
+- Integration readiness endpoint and admin connection-status page.
+- Admin product duplication, Supabase-backed backup/export/validated restore, and a real catalog preview with checkout disabled.
+- Unit tests for server-side checkout validation and admin export helpers.
+- Idempotency fingerprinting so a changed cart/email cannot accidentally reuse an older payment order.
+- Basic security headers plus safe 404/error states.
 - CI checks for catalog integrity, TypeScript and production build.
 
 ## Run locally

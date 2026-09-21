@@ -4,14 +4,14 @@ This checklist is the final gate between the prepared local/integration-ready bu
 
 ## Before connecting accounts
 - Review the catalog in `/admin`.
-- Review the draft in `/admin/preview`.
+- Review the real catalog preview in `/admin/preview`.
 - Download the full admin backup.
 - Confirm which products/variants should track stock.
 - Confirm fulfillment: pickup, delivery, shipping, or a combination.
 - Confirm which buyer fields are required for fulfillment.
 
 ## Supabase
-- Confirm the transferred client-owned Supabase project contains the committed migrations and seed.
+- Confirm the configured Supabase project contains the committed migrations and seed.
 - Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` in the host's secret settings.
 - Verify RLS as anon, authenticated non-admin, and admin.
 

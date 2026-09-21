@@ -15,7 +15,10 @@ export function AdminLoginForm() {
     try {
       const { error: signInError } = await createClient().auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${window.location.origin}/admin` },
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=/admin`,
+      },
       });
       if (signInError) throw signInError;
       setError("Te enviamos un enlace seguro para ingresar.");
