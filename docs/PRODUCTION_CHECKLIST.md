@@ -4,20 +4,15 @@ This checklist is the final gate between the prepared local/integration-ready bu
 
 ## Before connecting accounts
 - Review the catalog in `/admin`.
-- Review the draft in `/admin/preview`.
+- Review the real catalog preview in `/admin/preview`.
 - Download the full admin backup.
 - Confirm which products/variants should track stock.
 - Confirm fulfillment: pickup, delivery, shipping, or a combination.
 - Confirm which buyer fields are required for fulfillment.
 
 ## Supabase
-- Create the client-owned Supabase project.
-- Apply `supabase/migrations/20260920_001_commerce.sql`.
-- Load the prepared catalog/stock using the generated admin SQL or the checked-in seed.
-- Create the first Supabase Auth admin user.
-- Register that user in `public.admin_users`.
-- Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY`.
-- Replace local-draft admin persistence with authenticated Supabase reads/writes.
+- Confirm the configured Supabase project contains the committed migrations and seed.
+- Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` in the host's secret settings.
 - Verify RLS as anon, authenticated non-admin, and admin.
 
 ## Mercado Pago

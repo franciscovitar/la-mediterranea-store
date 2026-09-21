@@ -1,5 +1,8 @@
 import { Storefront } from "@/components/Storefront";
+import { getPublicCatalog } from "@/lib/integrations/supabase/public";
 
-export default function Home() {
-  return <Storefront />;
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  return <Storefront catalog={await getPublicCatalog()} />;
 }

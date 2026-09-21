@@ -1,12 +1,21 @@
 import { AdminPanel } from "@/components/AdminPanel";
-import { AdminHandoffTools } from "@/components/AdminHandoffTools";
 import { getIntegrationReadiness } from "@/lib/integrations/config";
-import { products } from "@/lib/products";
+import { readCatalog } from "@/lib/integrations/supabase/catalog";
+import { AdminAuthorizationError, requireAdmin } from "@/lib/admin/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminPage() {
+export default async function AdminPage() {
   const readiness = getIntegrationReadiness();
+  let supabase;
+  try {
+    supabase = await requireAdmin();
+  } catch (error) {
+    if (error instanceof AdminAuthorizationError) redirect("/admin/login");
+    throw error;
+  }
+  const products = await readCatalog(supabase);
 
   return (
     <main className="checkout-shell admin-shell">
@@ -20,12 +29,11 @@ export default function AdminPage() {
           <div>
             <span className="eyebrow">Panel interno</span>
             <h1 className="checkout-title">Administración</h1>
-            <p className="checkout-lead">Ya podés preparar productos y stock. Hasta conectar Supabase, todo queda como borrador local en este navegador.</p>
+            <p className="checkout-lead">Los cambios se guardan en Supabase y quedan disponibles al recargar.</p>
           </div>
-          <span className="admin-draft-badge">Borrador local</span>
+          <span className="admin-draft-badge">Supabase</span>
         </div>
 
-        <AdminHandoffTools initialProducts={products} />
         <AdminPanel initialProducts={products} readiness={readiness} />
       </div>
     </main>

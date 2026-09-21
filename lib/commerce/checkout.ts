@@ -71,13 +71,13 @@ export function normalizeCheckoutLines(value: unknown): CheckoutInputLine[] {
   });
 }
 
-function activeProduct(productId: string): Product {
-  const product = products.find((candidate) => candidate.id === productId && candidate.active);
+function activeProduct(catalog: Product[], productId: string): Product {
+  const product = catalog.find((candidate) => candidate.id === productId && candidate.active);
   if (!product) throw new CheckoutValidationError("Uno de los productos ya no está disponible.");
   return product;
 }
 
-export function quoteCheckout(rawLines: unknown): CheckoutQuote {
+export function quoteCheckoutFromCatalog(rawLines: unknown, catalog: Product[]): CheckoutQuote {
   const input = normalizeCheckoutLines(rawLines);
   const merged = new Map<string, CheckoutInputLine>();
 
@@ -93,7 +93,7 @@ export function quoteCheckout(rawLines: unknown): CheckoutQuote {
   }
 
   const lines = Array.from(merged.values()).map((line) => {
-    const product = activeProduct(line.productId);
+    const product = activeProduct(catalog, line.productId);
     const color = product.colors?.find((candidate) =>
       candidate.key === line.colorKey || (!line.colorKey && candidate.label === line.colorLabel)
     );
@@ -129,4 +129,9 @@ export function quoteCheckout(rawLines: unknown): CheckoutQuote {
 
   const total = lines.reduce((sum, line) => sum + line.lineTotal, 0);
   return { currency: "ARS", lines, total };
+}
+
+// Kept for isolated unit tests and unconfigured local development.
+export function quoteCheckout(rawLines: unknown): CheckoutQuote {
+  return quoteCheckoutFromCatalog(rawLines, products);
 }

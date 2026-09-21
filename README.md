@@ -2,7 +2,7 @@
 
 Reconstruction of the public merchandising storefront for **La Mediterránea — Orquesta-Escuela Infantil y Juvenil**.
 
-The storefront is complete enough to browse the catalog and manage a persistent cart. The repository now also contains an **integration-ready commerce layer** so Supabase and Mercado Pago can be connected later without redesigning the storefront.
+The storefront reads its operational catalog from Supabase and keeps the client experience unchanged. Mercado Pago remains intentionally disconnected until its real credentials are available.
 
 ## Current checkpoint
 
@@ -14,10 +14,17 @@ The storefront is complete enough to browse the catalog and manage a persistent 
 - Persistent client-side cart with quantity controls.
 - Server-authoritative checkout quote endpoint.
 - Checkout UI and payment result pages.
-- Supabase schema + seed prepared for products, variants, stock, orders and admin authorization.
+- Supabase schema + seed applied for products, variants, stock, orders and admin authorization.
+- Public storefront catalog, server-side checkout quote and authenticated admin persistence use Supabase.
+- Supabase Storage serves product images with administrator-only writes.
+- Magic Link authentication protects `/admin`; database RLS enforces the administrator role.
 - Mercado Pago Checkout Pro Orders API adapter prepared behind environment variables.
 - Signed Mercado Pago webhook endpoint prepared.
-- Integration readiness endpoint and admin connection-status page.\n- Local-draft admin workspace for adding/editing products, preparing variants and drafting stock before Supabase is connected.\n- Draft storefront preview, portable admin backup and generated initial Supabase SQL.\n- Unit tests for server-side checkout validation and draft/export helpers.\n- Idempotency fingerprinting so a changed cart/email cannot accidentally reuse an older payment order.\n- Basic security headers plus safe 404/error states.
+- Integration readiness endpoint and admin connection-status page.
+- Admin product duplication, Supabase-backed backup/export/validated restore, and a real catalog preview with checkout disabled.
+- Unit tests for server-side checkout validation and admin export helpers.
+- Idempotency fingerprinting so a changed cart/email cannot accidentally reuse an older payment order.
+- Basic security headers plus safe 404/error states.
 - CI checks for catalog integrity, TypeScript and production build.
 
 ## Run locally
@@ -35,11 +42,11 @@ Open `http://localhost:3000`.
 npm run check
 ```
 
-## Connect later
+## Runtime configuration
 
-Copy `.env.example` to `.env.local` only when the real accounts exist. Do not commit credentials.
+Copy `.env.example` to `.env.local`. Do not commit credentials. The public URL/key are used by the browser for RLS-protected catalog/Auth access; `SUPABASE_SECRET_KEY` stays server-only for the prepared payment workflow.
 
-The remaining external setup is documented in [Integration-ready checkpoint](docs/INTEGRATION_READY.md).
+The remaining payment/deployment gates are documented in [Integration-ready checkpoint](docs/INTEGRATION_READY.md).
 
 ## Scope and provenance
 
