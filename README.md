@@ -46,3 +46,9 @@ The remaining external setup is documented in [Integration-ready checkpoint](doc
 - [V1 scope](docs/SCOPE_V1.md)
 - [Integration-ready checkpoint](docs/INTEGRATION_READY.md)
 - [Source notes](docs/SOURCE_NOTES.md)
+
+## Production handoff
+
+Before launch, follow [the production handoff checklist](docs/PRODUCTION_CHECKLIST.md).
+
+Deployment smoke endpoint: `/api/health`.

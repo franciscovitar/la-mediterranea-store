@@ -26,7 +26,12 @@ Deliver a clean storefront that can become a real ecommerce without rewriting th
 - Success, pending and failure return pages.
 - Signed webhook verification and server-side provider status lookup.
 - Integration readiness endpoint.
-- Admin readiness page.\n- Local-draft admin workspace for create/edit/delete/duplicate products, variants, visibility and stock preparation.\n- JSON catalog import/export and stock CSV export so preparation work is portable before Supabase exists.\n- Customer-facing preview of the local draft with checkout intentionally disabled.\n- One-file admin backup and generated initial Supabase SQL from the prepared draft.\n- Automated regression tests for server-authoritative pricing, variant validation and admin draft/export helpers.
+- Admin readiness page.
+- Local-draft admin workspace for create/edit/delete/duplicate products, variants, visibility and stock preparation.
+- JSON catalog import/export and stock CSV export so preparation work is portable before Supabase exists.
+- Customer-facing preview of the local draft with checkout intentionally disabled.
+- One-file admin backup and generated initial Supabase SQL from the prepared draft.
+- Automated regression tests for server-authoritative pricing, variant validation and admin draft/export helpers.
 - Environment-variable contract with no committed secrets.
 
 ## Still requires real external accounts
@@ -50,3 +55,10 @@ Deliver a clean storefront that can become a real ecommerce without rewriting th
 
 ## Current Definition of Done
 Without external credentials, a customer can browse the full catalog, choose variants, manage a persistent cart, open checkout and receive a server-authoritative quote. The repository contains the database/payment contracts and endpoints needed for connection. Supabase and Mercado Pago are not considered working until their real environments are connected and end-to-end tests pass.
+
+## Pre-integration polish
+- Full admin backup can be restored, not only exported.
+- Next-generated route typing is committed so normal local development does not repeatedly dirty `next-env.d.ts`.
+- Admin, checkout and API routes are excluded from search indexing where appropriate.
+- A minimal `/api/health` endpoint is available for deployment smoke checks.
+- The production handoff checklist documents the remaining external gates.
