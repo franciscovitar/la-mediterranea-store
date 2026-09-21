@@ -52,6 +52,6 @@ Do not call payments, stock or admin "done" merely because environment variables
 - signed webhook is received;
 - provider status is fetched server-side;
 - duplicate checkout attempts do not create duplicate provider orders;
-- payment success does not depend on return-page query parameters;
+- payment success does not depend on return-page query parameters;\n- the success return page does not clear the cart or mark payment as final before server confirmation;\n- checkout idempotency is tied to the canonical cart + email fingerprint so a changed order gets a new request id;
 - stock behavior is tested with tracked and untracked products;
 - HTTPS production deployment is live.

@@ -24,3 +24,21 @@ test("checkout rejects an invalid size", () => {
     CheckoutValidationError,
   );
 });
+
+import { checkoutFingerprint, readStoredCheckoutRequest } from "../lib/commerce/idempotency";
+
+test("checkout fingerprint is stable across line ordering", () => {
+  const a = checkoutFingerprint([
+    { productId: "b", quantity: 1 },
+    { productId: "a", colorKey: "x", size: "M", quantity: 2 },
+  ], " USER@MAIL.COM ");
+  const b = checkoutFingerprint([
+    { productId: "a", colorKey: "x", size: "M", quantity: 2 },
+    { productId: "b", quantity: 1 },
+  ], "user@mail.com");
+  assert.equal(a, b);
+});
+
+test("legacy bare checkout ids are treated as stale", () => {
+  assert.equal(readStoredCheckoutRequest("123e4567-e89b-12d3-a456-426614174000"), null);
+});
