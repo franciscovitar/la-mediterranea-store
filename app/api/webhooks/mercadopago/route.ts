@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getIntegrationReadiness } from "@/lib/integrations/config";
 import { getMercadoPagoOrder, verifyMercadoPagoSignature } from "@/lib/integrations/mercadopago/server";
 import { applyMercadoPagoEvent } from "@/lib/integrations/supabase/server";
+import { HttpRequestError, noStoreJson, readJsonBody } from "@/lib/http/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 export async function POST(request: NextRequest) {
   const readiness = getIntegrationReadiness();
   if (!readiness.supabaseServer || !readiness.mercadoPagoApi || !readiness.mercadoPagoWebhook) {
-    return Response.json({ error: "Webhook no configurado." }, { status: 503 });
+    return noStoreJson({ error: "Webhook no configurado." }, { status: 503 });
   }
 
   const dataId = request.nextUrl.searchParams.get("data.id");
@@ -21,15 +22,15 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get("x-signature");
 
   if (!dataId || !verifyMercadoPagoSignature({ dataId, requestId, signature })) {
-    return Response.json({ error: "Firma inválida." }, { status: 401 });
+    return noStoreJson({ error: "Firma inválida." }, { status: 401 });
   }
 
   try {
-    const payload = await request.json() as unknown;
+    const payload = await readJsonBody<unknown>(request, 65_536);
     const providerOrder = await getMercadoPagoOrder(dataId);
     const localOrderId = providerOrder.external_reference;
     if (!localOrderId || !providerOrder.id) {
-      return Response.json({ error: "La order no tiene referencia local." }, { status: 422 });
+      return noStoreJson({ error: "La order no tiene referencia local." }, { status: 422 });
     }
 
     const payloadRecord = isObject(payload) ? payload : {};
@@ -45,8 +46,11 @@ export async function POST(request: NextRequest) {
       payload,
     });
 
-    return Response.json({ received: true });
-  } catch {
-    return Response.json({ error: "No se pudo procesar la notificación." }, { status: 500 });
+    return noStoreJson({ received: true });
+  } catch (error) {
+    if (error instanceof HttpRequestError) {
+      return noStoreJson({ error: error.message }, { status: error.status });
+    }
+    return noStoreJson({ error: "No se pudo procesar la notificación." }, { status: 500 });
   }
 }

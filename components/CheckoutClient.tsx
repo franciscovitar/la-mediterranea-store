@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { CartLine } from "@/components/CartDrawer";
-import { CART_STORAGE_KEY, CHECKOUT_REQUEST_STORAGE_KEY } from "@/lib/commerce/cart";
+import { CART_STORAGE_KEY, CHECKOUT_REQUEST_STORAGE_KEY, reconcileCart, type CartLine } from "@/lib/commerce/cart";
 import { checkoutFingerprint, readStoredCheckoutRequest } from "@/lib/commerce/idempotency";
-import { formatMoney } from "@/lib/products";
+import { formatMoney, products as baseProducts } from "@/lib/products";
 
 type Quote = {
   currency: "ARS";
@@ -54,7 +53,9 @@ export function CheckoutClient() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(CART_STORAGE_KEY);
-      setCart(saved ? JSON.parse(saved) as CartLine[] : []);
+      const reconciled = saved ? reconcileCart(JSON.parse(saved), baseProducts) : [];
+      setCart(reconciled);
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(reconciled));
     } catch {
       setCart([]);
     }

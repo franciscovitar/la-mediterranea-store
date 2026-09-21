@@ -52,3 +52,7 @@ The remaining external setup is documented in [Integration-ready checkpoint](doc
 Before launch, follow [the production handoff checklist](docs/PRODUCTION_CHECKLIST.md).
 
 Deployment smoke endpoint: `/api/health`.
+
+## Runtime
+
+The repository and CI target Node.js 22.x. The public sitemap is generated from `NEXT_PUBLIC_SITE_URL` when that production URL exists.
