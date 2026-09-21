@@ -39,7 +39,7 @@ The server sends an `X-Idempotency-Key` when creating the Mercado Pago order. Th
 - The catalog and cart keep working.
 - `/checkout` recalculates the order from server-owned catalog data.
 - The real pay button stays disabled.
-- `/admin` shows readiness but does not expose fake/insecure edit forms.
+- `/admin` includes a functional local-draft workspace for products and stock. It intentionally does not publish or write to a remote database until Supabase Auth is connected.\n- Draft products can be exported/imported as JSON and draft stock can be exported as CSV.
 - No secret values are committed.
 
 ## Important production gate
