@@ -55,3 +55,8 @@ Do not call payments, stock or admin "done" merely because environment variables
 - payment success does not depend on return-page query parameters;\n- the success return page does not clear the cart or mark payment as final before server confirmation;\n- checkout idempotency is tied to the canonical cart + email fingerprint so a changed order gets a new request id;
 - stock behavior is tested with tracked and untracked products;
 - HTTPS production deployment is live.
+
+
+## Backup and recovery
+
+Before changing the backend integration, download the full admin backup from `/admin`. The same panel can restore that backup into local draft mode, so catalog and stock preparation are recoverable before Supabase becomes canonical.

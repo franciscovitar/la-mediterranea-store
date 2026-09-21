@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/products";
-import type { DraftInventory } from "@/lib/admin/draft";
+import { validateDraftProducts, type DraftInventory } from "@/lib/admin/draft";
 
 function sqlString(value: string) {
   return "'" + value.replace(/'/g, "''") + "'";
@@ -127,4 +127,50 @@ export function buildSupabaseDraftSql(products: Product[], inventory: DraftInven
 
   lines.push("commit;", "");
   return lines.join("\n");
+}
+
+
+export function parseAdminBackup(value: unknown): {
+  products: Product[];
+  inventory: DraftInventory;
+} {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("El respaldo no tiene un formato válido.");
+  }
+
+  const row = value as Record<string, unknown>;
+  if (row.version !== 1) {
+    throw new Error("La versión del respaldo no es compatible.");
+  }
+
+  const products = validateDraftProducts(row.products);
+  if (!row.inventory || typeof row.inventory !== "object" || Array.isArray(row.inventory)) {
+    throw new Error("El stock del respaldo no tiene un formato válido.");
+  }
+
+  const validProductIds = new Set(products.map((product) => product.id));
+  const inventory: DraftInventory = {};
+
+  for (const [key, raw] of Object.entries(row.inventory as Record<string, unknown>)) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new Error("Hay una fila de stock inválida en el respaldo.");
+    }
+
+    const entry = raw as Record<string, unknown>;
+    if (typeof entry.tracked !== "boolean") {
+      throw new Error("Hay una fila de stock sin estado de control válido.");
+    }
+
+    const stock = Number(entry.stock);
+    if (!Number.isInteger(stock) || stock < 0) {
+      throw new Error("Hay una cantidad de stock inválida.");
+    }
+
+    const [productId] = key.split("|");
+    if (!validProductIds.has(productId)) continue;
+
+    inventory[key] = { tracked: entry.tracked, stock };
+  }
+
+  return { products, inventory };
 }
