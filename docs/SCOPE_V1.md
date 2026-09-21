@@ -69,3 +69,5 @@ Without external credentials, a customer can browse the full catalog, choose var
 - Public sitemap generation is prepared from the production site URL.
 - App icon is wired from the existing brand asset.
 - Node.js 22.x is declared to match CI.
+
+- Saved carts are reconciled against the current catalog on load, so stale prices, removed products or invalid variants cannot linger in the visible cart.

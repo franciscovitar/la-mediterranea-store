@@ -42,3 +42,29 @@ test("checkout fingerprint is stable across line ordering", () => {
 test("legacy bare checkout ids are treated as stale", () => {
   assert.equal(readStoredCheckoutRequest("123e4567-e89b-12d3-a456-426614174000"), null);
 });
+
+import { reconcileCart } from "../lib/commerce/cart";
+import { products } from "../lib/products";
+
+test("saved cart is reconciled to current catalog prices and names", () => {
+  const reconciled = reconcileCart([{
+    key: "stale",
+    productId: "botella",
+    name: "Nombre viejo",
+    price: 1,
+    quantity: 2,
+    image: "/old.jpg",
+  }], products);
+  assert.equal(reconciled.length, 1);
+  assert.equal(reconciled[0]?.name, "Botella de aluminio");
+  assert.equal(reconciled[0]?.price, 22000);
+  assert.equal(reconciled[0]?.quantity, 2);
+});
+
+test("saved cart drops products or variants that no longer exist", () => {
+  const reconciled = reconcileCart([
+    { productId: "no_existe", quantity: 1 },
+    { productId: "remera_algodon", colorKey: "invalido", size: "M", quantity: 1 },
+  ], products);
+  assert.deepEqual(reconciled, []);
+});

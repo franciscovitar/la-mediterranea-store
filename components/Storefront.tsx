@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CartDrawer, type CartLine } from "@/components/CartDrawer";
+import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard, type AddToCartPayload } from "@/components/ProductCard";
 import { formatMoney, products as baseProducts, type Product } from "@/lib/products";
-import { CART_STORAGE_KEY } from "@/lib/commerce/cart";
+import { CART_STORAGE_KEY, reconcileCart, type CartLine } from "@/lib/commerce/cart";
 
 function lineKey(payload: AddToCartPayload) {
   return [payload.product.id, payload.colorKey ?? "", payload.size ?? ""].join("|");
@@ -31,13 +31,13 @@ export function Storefront({
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(cartStorageKey);
-      if (saved) setCart(JSON.parse(saved) as CartLine[]);
+      if (saved) setCart(reconcileCart(JSON.parse(saved), catalog));
     } catch {
       window.localStorage.removeItem(cartStorageKey);
     } finally {
       setHydrated(true);
     }
-  }, [cartStorageKey]);
+  }, [cartStorageKey, catalog]);
 
   useEffect(() => {
     if (!hydrated) return;

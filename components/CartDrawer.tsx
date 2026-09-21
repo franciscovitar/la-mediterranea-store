@@ -1,18 +1,7 @@
 "use client";
 
 import { formatMoney } from "@/lib/products";
-
-export type CartLine = {
-  key: string;
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  colorKey?: string;
-  colorLabel?: string;
-  size?: string;
-};
+import type { CartLine } from "@/lib/commerce/cart";
 
 export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, checkoutHref = "/checkout", checkoutNote }: {
   lines: CartLine[];
