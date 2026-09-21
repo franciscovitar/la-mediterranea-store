@@ -26,7 +26,7 @@ Deliver a clean storefront that can become a real ecommerce without rewriting th
 - Success, pending and failure return pages.
 - Signed webhook verification and server-side provider status lookup.
 - Integration readiness endpoint.
-- Admin readiness page.\n- Local-draft admin workspace for create/edit/delete/duplicate products, variants, visibility and stock preparation.\n- JSON catalog import/export and stock CSV export so preparation work is portable before Supabase exists.
+- Admin readiness page.\n- Local-draft admin workspace for create/edit/delete/duplicate products, variants, visibility and stock preparation.\n- JSON catalog import/export and stock CSV export so preparation work is portable before Supabase exists.\n- Customer-facing preview of the local draft with checkout intentionally disabled.\n- One-file admin backup and generated initial Supabase SQL from the prepared draft.\n- Automated regression tests for server-authoritative pricing, variant validation and admin draft/export helpers.
 - Environment-variable contract with no committed secrets.
 
 ## Still requires real external accounts

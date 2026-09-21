@@ -393,3 +393,22 @@ footer { padding: 28px 0 104px; background: #17100e; color: #a99d97; }
   .admin-stock-head, .admin-stock-row { min-width: 690px; }
   .admin-integration-cards { grid-template-columns: 1fr; }
 }
+
+
+/* Pre-integration preview and handoff */
+.draft-preview-strip { background: #241a16; color: white; }
+.draft-preview-strip .container { min-height: 42px; display: flex; align-items: center; gap: 12px; font-size: 11px; }
+.draft-preview-strip strong { color: var(--gold); }
+.draft-preview-strip span { color: #d7ceca; }
+.draft-preview-strip a { margin-left: auto; border-bottom: 1px solid rgba(255,255,255,.35); font-weight: 850; }
+.draft-preview-fallback { border-bottom: 1px solid #ead7ab; background: #fff8e9; color: #8a5b12; padding: 9px 16px; text-align: center; font-size: 10px; font-weight: 750; }
+.admin-handoff-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 18px; align-items: center; margin-top: 18px; border: 1px solid var(--line); border-radius: 18px; background: white; padding: 15px 16px; box-shadow: 0 16px 38px -34px rgba(43,33,29,.7); }
+.admin-handoff-tools strong { display: block; font-size: 12px; }
+.admin-handoff-tools p { margin: 3px 0 0; color: var(--ink-soft); font-size: 10px; line-height: 1.45; }
+.admin-link-button { display: inline-flex; align-items: center; justify-content: center; }
+.admin-tool-message { grid-column: 1 / -1; color: var(--green); font-size: 10px; font-weight: 800; }
+@media (max-width: 760px) {
+  .draft-preview-strip .container { flex-wrap: wrap; padding-block: 8px; }
+  .draft-preview-strip a { margin-left: 0; }
+  .admin-handoff-tools { grid-template-columns: 1fr; }
+}

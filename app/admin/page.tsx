@@ -1,4 +1,5 @@
 import { AdminPanel } from "@/components/AdminPanel";
+import { AdminHandoffTools } from "@/components/AdminHandoffTools";
 import { getIntegrationReadiness } from "@/lib/integrations/config";
 import { products } from "@/lib/products";
 
@@ -24,6 +25,7 @@ export default function AdminPage() {
           <span className="admin-draft-badge">Borrador local</span>
         </div>
 
+        <AdminHandoffTools initialProducts={products} />
         <AdminPanel initialProducts={products} readiness={readiness} />
       </div>
     </main>

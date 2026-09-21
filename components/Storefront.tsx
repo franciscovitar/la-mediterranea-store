@@ -3,14 +3,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { CartDrawer, type CartLine } from "@/components/CartDrawer";
 import { ProductCard, type AddToCartPayload } from "@/components/ProductCard";
-import { activeProducts, categories, formatMoney } from "@/lib/products";
+import { formatMoney, products as baseProducts, type Product } from "@/lib/products";
 import { CART_STORAGE_KEY } from "@/lib/commerce/cart";
 
 function lineKey(payload: AddToCartPayload) {
   return [payload.product.id, payload.colorKey ?? "", payload.size ?? ""].join("|");
 }
 
-export function Storefront() {
+type StorefrontProps = {
+  catalog?: Product[];
+  cartStorageKey?: string;
+  checkoutHref?: string | null;
+  previewMode?: boolean;
+};
+
+export function Storefront({
+  catalog = baseProducts,
+  cartStorageKey = CART_STORAGE_KEY,
+  checkoutHref = "/checkout",
+  previewMode = false,
+}: StorefrontProps = {}) {
   const [category, setCategory] = useState("Todos");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -18,19 +30,19 @@ export function Storefront() {
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(CART_STORAGE_KEY);
+      const saved = window.localStorage.getItem(cartStorageKey);
       if (saved) setCart(JSON.parse(saved) as CartLine[]);
     } catch {
-      window.localStorage.removeItem(CART_STORAGE_KEY);
+      window.localStorage.removeItem(cartStorageKey);
     } finally {
       setHydrated(true);
     }
-  }, []);
+  }, [cartStorageKey]);
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-  }, [cart, hydrated]);
+    window.localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+  }, [cart, cartStorageKey, hydrated]);
 
   useEffect(() => {
     document.body.classList.toggle("cart-is-open", cartOpen);
@@ -47,9 +59,17 @@ export function Storefront() {
     };
   }, [cartOpen]);
 
+  const activeProducts = useMemo(
+    () => catalog.filter((product) => product.active),
+    [catalog],
+  );
+  const categories = useMemo(
+    () => Array.from(new Set(activeProducts.map((product) => product.category))),
+    [activeProducts],
+  );
   const visibleProducts = useMemo(
     () => category === "Todos" ? activeProducts : activeProducts.filter((product) => product.category === category),
-    [category],
+    [activeProducts, category],
   );
 
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
@@ -84,6 +104,15 @@ export function Storefront() {
 
   return (
     <>
+      {previewMode ? (
+        <div className="draft-preview-strip">
+          <div className="container">
+            <strong>Vista previa del borrador</strong>
+            <span>Estos cambios todavía no están publicados.</span>
+            <a href="/admin">Volver al panel</a>
+          </div>
+        </div>
+      ) : null}
       <header className="topbar">
         <div className="container topbar-inner">
           <a className="brand" href="#inicio" aria-label="Ir al inicio">
@@ -194,6 +223,8 @@ export function Storefront() {
         onClose={() => setCartOpen(false)}
         onRemove={(key) => setCart((current) => current.filter((line) => line.key !== key))}
         onStep={stepLine}
+        checkoutHref={checkoutHref}
+        checkoutNote={previewMode ? "El checkout está desactivado en la vista previa del borrador." : undefined}
         open={cartOpen}
       />
     </>

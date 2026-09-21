@@ -2,6 +2,7 @@ import type { Product, ProductColor } from "@/lib/products";
 
 export const ADMIN_PRODUCTS_STORAGE_KEY = "la-mediterranea-admin-products-v1";
 export const ADMIN_INVENTORY_STORAGE_KEY = "la-mediterranea-admin-inventory-v1";
+export const ADMIN_PREVIEW_CART_STORAGE_KEY = "la-mediterranea-admin-preview-cart-v1";
 
 export type DraftInventoryEntry = {
   tracked: boolean;

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CartLine } from "@/components/CartDrawer";
 import { CART_STORAGE_KEY, CHECKOUT_REQUEST_STORAGE_KEY } from "@/lib/commerce/cart";
+import { checkoutFingerprint, readStoredCheckoutRequest } from "@/lib/commerce/idempotency";
 import { formatMoney } from "@/lib/products";
 
 type Quote = {
@@ -101,18 +102,19 @@ export function CheckoutClient() {
     setPaying(true);
     setError("");
     try {
-      let requestId = window.localStorage.getItem(CHECKOUT_REQUEST_STORAGE_KEY);
-      if (!requestId) {
-        requestId = crypto.randomUUID();
-        window.localStorage.setItem(CHECKOUT_REQUEST_STORAGE_KEY, requestId);
-      }
-
       const canonicalLines = quote.lines.map((line) => ({
         productId: line.productId,
         colorKey: line.colorKey,
         size: line.size,
         quantity: line.quantity,
       }));
+
+      const fingerprint = checkoutFingerprint(canonicalLines, buyerEmail);
+      const stored = readStoredCheckoutRequest(window.localStorage.getItem(CHECKOUT_REQUEST_STORAGE_KEY));
+      const requestId = stored?.fingerprint === fingerprint ? stored.requestId : crypto.randomUUID();
+      if (!stored || stored.requestId !== requestId || stored.fingerprint !== fingerprint) {
+        window.localStorage.setItem(CHECKOUT_REQUEST_STORAGE_KEY, JSON.stringify({ requestId, fingerprint }));
+      }
 
       const response = await fetch("/api/checkout/create", {
         method: "POST",
