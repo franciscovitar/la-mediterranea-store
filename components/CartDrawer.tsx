@@ -34,7 +34,7 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, ch
                   <strong>{formatMoney(line.price * line.quantity)}</strong>
                 </div>
                 <div className="cart-line-actions">
-                  <div className="quantity" aria-label={`Cantidad de ${line.name}`}>
+                  <div className="quantity" role="group" aria-label={`Cantidad de ${line.name}`}>
                     <button aria-label="Restar uno" onClick={() => onStep(line.key, -1)} type="button">−</button>
                     <span>{line.quantity}</span>
                     <button aria-label="Sumar uno" onClick={() => onStep(line.key, 1)} type="button">+</button>
