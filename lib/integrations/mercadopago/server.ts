@@ -55,9 +55,7 @@ export async function createMercadoPagoOrder(input: {
       {
         title: "Compra La Mediterránea",
         quantity: 1,
-        unit_measure: "unit",
         unit_price: money(input.total),
-        total_amount: money(input.total),
       },
     ],
     config: {
@@ -96,7 +94,7 @@ export function verifyMercadoPagoSignature(input: {
   signature: string | null;
 }) {
   const { webhookSecret } = getMercadoPagoConfig();
-  if (!webhookSecret || !input.signature) return false;
+  if (!webhookSecret || !input.signature || !input.dataId) return false;
 
   let timestamp = "";
   let receivedHash = "";
@@ -107,13 +105,14 @@ export function verifyMercadoPagoSignature(input: {
   }
   if (!timestamp || !receivedHash) return false;
 
-  let manifest = "";
-  if (input.dataId) manifest += "id:" + input.dataId.toLowerCase() + ";";
-  if (input.requestId) manifest += "request-id:" + input.requestId + ";";
-  manifest += "ts:" + timestamp + ";";
-
-  const calculated = createHmac("sha256", webhookSecret).update(manifest).digest("hex");
-  const left = Buffer.from(calculated, "utf8");
   const right = Buffer.from(receivedHash, "utf8");
-  return left.length === right.length && timingSafeEqual(left, right);
+  const dataIds = Array.from(new Set([input.dataId.toLowerCase(), input.dataId]));
+
+  return dataIds.some((dataId) => {
+    let manifest = "id:" + dataId + ";";
+    if (input.requestId) manifest += "request-id:" + input.requestId + ";";
+    manifest += "ts:" + timestamp + ";";
+    const left = Buffer.from(createHmac("sha256", webhookSecret).update(manifest).digest("hex"), "utf8");
+    return left.length === right.length && timingSafeEqual(left, right);
+  });
 }
