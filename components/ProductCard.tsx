@@ -76,7 +76,7 @@ export function ProductCard({ product, onAdd }: { product: Product; onAdd: (payl
         <div className="product-bottom">
           <strong className="product-price">{formatMoney(product.price)}</strong>
           <div className="product-buy-controls">
-            <div className="product-quantity" aria-label={`Cantidad de ${product.name}`}>
+            <div className="product-quantity" role="group" aria-label={`Cantidad de ${product.name}`}>
               <button aria-label="Restar uno" disabled={quantity === 1} onClick={() => setQuantity((current) => Math.max(1, current - 1))} type="button">−</button>
               <span aria-live="polite">{quantity}</span>
               <button aria-label="Sumar uno" disabled={quantity === 99} onClick={() => setQuantity((current) => Math.min(99, current + 1))} type="button">+</button>

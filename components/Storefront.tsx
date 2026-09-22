@@ -141,7 +141,7 @@ export function Storefront({
                 <a className="primary-button" href="#productos">Ver catálogo</a>
                 <a className="secondary-button" href="#proyecto">Conocer el proyecto</a>
               </div>
-              <div className="hero-proof" aria-label="Características de la tienda">
+              <div className="hero-proof" role="group" aria-label="Características de la tienda">
                 <span>Catálogo oficial</span><span>Precios actualizados</span><span>Compra simple</span>
               </div>
             </div>
@@ -159,7 +159,7 @@ export function Storefront({
 
         <section className="impact-strip" aria-label="Impacto del proyecto">
           <div className="container impact-strip-inner">
-            <span>♪</span>
+            <span aria-hidden="true">♪</span>
             <p>Cada compra apoya la educación musical y transforma el futuro de muchos chicos.</p>
           </div>
         </section>
@@ -171,7 +171,7 @@ export function Storefront({
               <p>{activeProducts.length} productos del catálogo actual, con los precios publicados en la web vigente.</p>
             </div>
 
-            <div className="category-filter" aria-label="Filtrar por categoría">
+            <div className="category-filter" role="group" aria-label="Filtrar por categoría">
               {["Todos", ...categories].map((option) => (
                 <button aria-pressed={category === option} className={category === option ? "is-selected" : ""} key={option} onClick={() => setCategory(option)} type="button">
                   {option}
