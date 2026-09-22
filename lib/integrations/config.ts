@@ -17,7 +17,7 @@ export type IntegrationReadiness = {
 
 export function getIntegrationReadiness(): IntegrationReadiness {
   const supabaseServer = Boolean(env("SUPABASE_URL") && env("SUPABASE_SECRET_KEY"));
-  const supabasePublic = Boolean(env("SUPABASE_URL") && env("SUPABASE_PUBLISHABLE_KEY"));
+  const supabasePublic = Boolean(env("NEXT_PUBLIC_SUPABASE_URL") && env("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"));
   const mercadoPagoApi = Boolean(env("MERCADOPAGO_ACCESS_TOKEN"));
   const mercadoPagoWebhook = Boolean(env("MERCADOPAGO_WEBHOOK_SECRET"));
   const siteUrl = Boolean(env("NEXT_PUBLIC_SITE_URL"));

@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
     return noStoreJson({ error: "Webhook no configurado." }, { status: 503 });
   }
 
-  const dataId = request.nextUrl.searchParams.get("data.id");
+  // Mercado Pago documents `data.id`; some official SDK examples use `data_id`.
+  // Accept either spelling but still require the HMAC signature before processing.
+  const dataId = request.nextUrl.searchParams.get("data.id") ?? request.nextUrl.searchParams.get("data_id");
   const requestId = request.headers.get("x-request-id");
   const signature = request.headers.get("x-signature");
 
