@@ -14,11 +14,11 @@ export function CheckoutResultClient({ orderId, mode }: { orderId?: string; mode
   const [checking, setChecking] = useState(Boolean(orderId));
 
   useEffect(() => {
-    const stableOrderId = orderId;
-    if (!stableOrderId) {
+    if (!orderId) {
       setChecking(false);
       return;
     }
+    const stableOrderId: string = orderId;
 
     let cancelled = false;
     let timer: number | undefined;
