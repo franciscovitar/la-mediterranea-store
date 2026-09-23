@@ -153,11 +153,15 @@ export function Storefront({
         <section className="hero" id="inicio">
           <div className="hero-orb hero-orb-one" aria-hidden="true" />
           <div className="hero-orb hero-orb-two" aria-hidden="true" />
+          <div className="hero-confetti" aria-hidden="true">
+            <i /><i /><i /><i /><i /><i /><i /><i />
+          </div>
           <div className="container hero-grid">
             <div className="hero-copy">
               <span className="eyebrow"><i /> Tienda oficial</span>
               <h1>Merchandising que acompaña la música.</h1>
               <p>Elegí tus productos de La Mediterránea y apoyá el futuro de la educación musical.</p>
+              <div className="music-eq" aria-hidden="true"><i /><i /><i /><i /><i /></div>
               <div className="hero-actions">
                 <a className="primary-button" href="#productos">Ver catálogo</a>
                 <a className="secondary-button" href="#proyecto">Conocer el proyecto</a>
@@ -169,6 +173,7 @@ export function Storefront({
 
             <div className="hero-card" aria-label="Selección destacada">
               <div className="hero-logo"><img src="/brand/logo.png" alt="La Mediterránea" /></div>
+              <div className="music-eq compact" aria-hidden="true"><i /><i /><i /><i /><i /></div>
               <div className="mini-products" aria-hidden="true">
                 {activeProducts.slice(0, 4).map((product) => (
                   <div className="mini-product" key={product.id}><img src={product.image} alt="" /></div>
@@ -181,7 +186,7 @@ export function Storefront({
 
         <section className="impact-strip" aria-label="Impacto del proyecto">
           <div className="container impact-strip-inner">
-            <span aria-hidden="true">♪</span>
+            <span className="impact-eq" aria-hidden="true"><i /><i /><i /><i /></span>
             <p>Cada compra apoya la educación musical y transforma el futuro de muchos chicos.</p>
           </div>
         </section>
