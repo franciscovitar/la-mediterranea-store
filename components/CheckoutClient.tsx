@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { CART_STORAGE_KEY, CHECKOUT_REQUEST_STORAGE_KEY, reconcileCart, type CartLine } from "@/lib/commerce/cart";
 import { checkoutFingerprint, readStoredCheckoutRequest } from "@/lib/commerce/idempotency";
+import type { FulfillmentMethod } from "@/lib/commerce/buyer";
 import { formatMoney, type Product } from "@/lib/products";
 
 type Quote = {
@@ -28,7 +30,11 @@ export function CheckoutClient() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [readiness, setReadiness] = useState<Readiness | null>(null);
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerPhone, setBuyerPhone] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
+  const [buyerNotes, setBuyerNotes] = useState("");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod | "">("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -87,8 +93,9 @@ export function CheckoutClient() {
     return () => { cancelled = true; };
   }, []);
 
-  async function startPayment() {
-    if (!readiness?.checkoutReady || !quote?.lines.length) return;
+  async function startPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!readiness?.checkoutReady || !quote?.lines.length || !fulfillmentMethod) return;
     setPaying(true);
     setError("");
     try {
@@ -98,8 +105,8 @@ export function CheckoutClient() {
         size: line.size,
         quantity: line.quantity,
       }));
-
-      const fingerprint = checkoutFingerprint(canonicalLines, buyerEmail);
+      const buyer = { buyerName, buyerPhone, buyerEmail, buyerNotes, fulfillmentMethod };
+      const fingerprint = checkoutFingerprint(canonicalLines, buyer);
       const stored = readStoredCheckoutRequest(window.localStorage.getItem(CHECKOUT_REQUEST_STORAGE_KEY));
       const requestId = stored?.fingerprint === fingerprint ? stored.requestId : crypto.randomUUID();
       if (!stored || stored.requestId !== requestId || stored.fingerprint !== fingerprint) {
@@ -109,7 +116,7 @@ export function CheckoutClient() {
       const response = await fetch("/api/checkout/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, buyerEmail, lines: canonicalLines }),
+        body: JSON.stringify({ requestId, ...buyer, lines: canonicalLines }),
       });
       const data = await response.json() as { checkoutUrl?: string; error?: string };
       if (!response.ok || !data.checkoutUrl) throw new Error(data.error ?? "No se pudo iniciar Mercado Pago.");
@@ -163,40 +170,112 @@ export function CheckoutClient() {
         ) : null}
       </section>
 
-      <aside className="checkout-card checkout-payment-card">
+      <form className="checkout-card checkout-payment-card" onSubmit={startPayment}>
         <div className="checkout-card-heading">
-          <span className="eyebrow">Pago seguro</span>
+          <span className="eyebrow">Datos y pago</span>
           <h2>Finalizar compra</h2>
         </div>
-        <p className="checkout-help">Al continuar te llevamos a Mercado Pago para completar el pago. Antes de abrirlo, el pedido y el importe se validan nuevamente.</p>
+        <p className="checkout-help">Completá tus datos. Después te llevamos a Mercado Pago para realizar el pago.</p>
 
-        <div className="checkout-field">
-          <label htmlFor="checkout-email">Email para el comprobante <span>(opcional)</span></label>
-          <input
-            autoComplete="email"
-            id="checkout-email"
-            onChange={(event) => setBuyerEmail(event.target.value)}
-            placeholder="tu@email.com"
-            type="email"
-            value={buyerEmail}
-          />
+        <div className="checkout-contact-grid">
+          <div className="checkout-field">
+            <label htmlFor="checkout-name">Nombre y apellido <b aria-hidden="true">*</b></label>
+            <input
+              autoComplete="name"
+              id="checkout-name"
+              maxLength={120}
+              onChange={(event) => setBuyerName(event.target.value)}
+              placeholder="Ej: María José Pérez"
+              required
+              type="text"
+              value={buyerName}
+            />
+          </div>
+
+          <div className="checkout-field">
+            <label htmlFor="checkout-phone">Teléfono / WhatsApp <b aria-hidden="true">*</b></label>
+            <input
+              autoComplete="tel"
+              id="checkout-phone"
+              inputMode="tel"
+              maxLength={40}
+              onChange={(event) => setBuyerPhone(event.target.value)}
+              placeholder="Ej: 351555-1234"
+              required
+              type="tel"
+              value={buyerPhone}
+            />
+          </div>
+
+          <div className="checkout-field">
+            <label htmlFor="checkout-email">Email <span>(opcional, para recibir confirmación)</span></label>
+            <input
+              autoComplete="email"
+              id="checkout-email"
+              maxLength={254}
+              onChange={(event) => setBuyerEmail(event.target.value)}
+              placeholder="tu@email.com"
+              type="email"
+              value={buyerEmail}
+            />
+          </div>
+
+          <fieldset className="checkout-field checkout-fulfillment">
+            <legend>¿Cómo lo recibís? <b aria-hidden="true">*</b></legend>
+            <div className="fulfillment-options">
+              <label className={fulfillmentMethod === "pickup" ? "is-selected" : ""}>
+                <input
+                  checked={fulfillmentMethod === "pickup"}
+                  name="fulfillment"
+                  onChange={() => setFulfillmentMethod("pickup")}
+                  required
+                  type="radio"
+                  value="pickup"
+                />
+                <span><strong>Retiro</strong><small>Coordinamos punto y horario por WhatsApp.</small></span>
+              </label>
+              <label className={fulfillmentMethod === "delivery" ? "is-selected" : ""}>
+                <input
+                  checked={fulfillmentMethod === "delivery"}
+                  name="fulfillment"
+                  onChange={() => setFulfillmentMethod("delivery")}
+                  required
+                  type="radio"
+                  value="delivery"
+                />
+                <span><strong>Entrega a coordinar</strong><small>Coordinamos los detalles por WhatsApp.</small></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div className="checkout-field">
+            <label htmlFor="checkout-notes">Observaciones <span>(opcional)</span></label>
+            <textarea
+              id="checkout-notes"
+              maxLength={1000}
+              onChange={(event) => setBuyerNotes(event.target.value)}
+              placeholder="Ej: prefiero retirar el finde, dudas de talle, etc."
+              rows={4}
+              value={buyerNotes}
+            />
+          </div>
         </div>
 
-        <button className="checkout-pay" disabled={!readiness?.checkoutReady || paying || !quote} onClick={startPayment} type="button">
+        <button className="checkout-pay" disabled={!readiness?.checkoutReady || paying || !quote} type="submit">
           {paying ? "Abriendo Mercado Pago…" : "Pagar con Mercado Pago"}
         </button>
 
-        <p className="checkout-secure-note"><span aria-hidden="true">✓</span> El estado final del pago se confirma de forma segura desde el servidor.</p>
+        <p className="checkout-secure-note"><span aria-hidden="true">✓</span> El importe y el estado final del pago se confirman de forma segura desde el servidor.</p>
 
         {!readiness?.checkoutReady ? (
           <div className="checkout-status checkout-unavailable">
             <strong>Pago online temporalmente no disponible</strong>
-            <p>Tu pedido sigue guardado en el carrito. Podés volver más tarde sin tener que armarlo de nuevo.</p>
+            <p>Tu carrito sigue guardado. Podés volver más tarde sin tener que armarlo de nuevo.</p>
           </div>
         ) : null}
 
         {error ? <p className="checkout-error">{error}</p> : null}
-      </aside>
+      </form>
     </div>
   );
 }

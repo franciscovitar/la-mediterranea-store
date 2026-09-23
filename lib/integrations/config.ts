@@ -9,6 +9,7 @@ export type IntegrationReadiness = {
   mercadoPagoApi: boolean;
   mercadoPagoWebhook: boolean;
   siteUrl: boolean;
+  orderEmail: boolean;
   checkoutReady: boolean;
   productionReady: boolean;
   missingForCheckout: string[];
@@ -21,6 +22,7 @@ export function getIntegrationReadiness(): IntegrationReadiness {
   const mercadoPagoApi = Boolean(env("MERCADOPAGO_ACCESS_TOKEN"));
   const mercadoPagoWebhook = Boolean(env("MERCADOPAGO_WEBHOOK_SECRET"));
   const siteUrl = Boolean(env("NEXT_PUBLIC_SITE_URL"));
+  const orderEmail = Boolean(env("RESEND_API_KEY") && env("ORDER_EMAIL_FROM") && env("ORDER_NOTIFICATION_EMAIL"));
 
   const missingForCheckout = [
     !supabaseServer ? "Supabase server" : null,
@@ -32,6 +34,7 @@ export function getIntegrationReadiness(): IntegrationReadiness {
     ...missingForCheckout,
     !supabasePublic ? "Supabase publishable key" : null,
     !mercadoPagoWebhook ? "Mercado Pago webhook secret" : null,
+    !orderEmail ? "Transactional order email" : null,
   ].filter((value): value is string => Boolean(value));
 
   return {
@@ -40,6 +43,7 @@ export function getIntegrationReadiness(): IntegrationReadiness {
     mercadoPagoApi,
     mercadoPagoWebhook,
     siteUrl,
+    orderEmail,
     checkoutReady: missingForCheckout.length === 0,
     productionReady: missingForProduction.length === 0,
     missingForCheckout,
@@ -63,5 +67,17 @@ export function getMercadoPagoConfig() {
     accessToken,
     webhookSecret,
     siteUrl: siteUrl?.replace(/\/$/, ""),
+  };
+}
+
+export function getOrderEmailConfig() {
+  const apiKey = env("RESEND_API_KEY");
+  const from = env("ORDER_EMAIL_FROM");
+  const merchantTo = env("ORDER_NOTIFICATION_EMAIL");
+  return {
+    apiKey,
+    from,
+    merchantTo,
+    ready: Boolean(apiKey && from && merchantTo),
   };
 }

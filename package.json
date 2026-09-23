@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "validate:catalog": "node scripts/validate-catalog.mjs",
     "check": "npm run validate:catalog && npm run typecheck && npm test && npm run build",
-    "test": "tsx --test tests/**/*.test.ts"
+    "test": "tsx --test tests/**/*.test.ts",
+    "test:e2e:smoke": "node scripts/critical-journey-smoke.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

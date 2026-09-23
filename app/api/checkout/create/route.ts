@@ -1,4 +1,5 @@
 import { CheckoutValidationError, normalizeCheckoutLines } from "@/lib/commerce/checkout";
+import { BuyerValidationError, normalizeBuyerDetails } from "@/lib/commerce/buyer";
 import { getIntegrationReadiness } from "@/lib/integrations/config";
 import { createMercadoPagoOrder } from "@/lib/integrations/mercadopago/server";
 import { attachMercadoPagoOrder, createPendingStoreOrder, getStoreOrderItems, markCheckoutError } from "@/lib/integrations/supabase/server";
@@ -8,7 +9,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   const readiness = getIntegrationReadiness();
@@ -21,21 +21,23 @@ export async function POST(request: Request) {
 
   let localOrderId: string | undefined;
   try {
-    const body = await readJsonBody<{ requestId?: unknown; buyerEmail?: unknown; lines?: unknown }>(request);
+    const body = await readJsonBody<{
+      requestId?: unknown;
+      buyerName?: unknown;
+      buyerPhone?: unknown;
+      buyerEmail?: unknown;
+      buyerNotes?: unknown;
+      fulfillmentMethod?: unknown;
+      lines?: unknown;
+    }>(request);
 
     if (typeof body.requestId !== "string" || !uuid.test(body.requestId)) {
       return noStoreJson({ error: "Identificador de checkout inválido." }, { status: 400 });
     }
 
-    const buyerEmail = typeof body.buyerEmail === "string" && body.buyerEmail.trim()
-      ? body.buyerEmail.trim().toLowerCase()
-      : undefined;
-    if (buyerEmail && !email.test(buyerEmail)) {
-      return noStoreJson({ error: "Ingresá un email válido." }, { status: 400 });
-    }
-
+    const buyer = normalizeBuyerDetails(body);
     const lines = normalizeCheckoutLines(body.lines);
-    const localOrder = await createPendingStoreOrder({ requestId: body.requestId, buyerEmail, lines });
+    const localOrder = await createPendingStoreOrder({ requestId: body.requestId, buyer, lines });
     localOrderId = localOrder.id;
 
     if (localOrder.checkoutUrl && localOrder.providerOrderId) {
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
       requestId: body.requestId,
       localOrderId: localOrder.id,
       total: localOrder.total,
-      buyerEmail,
+      buyerEmail: buyer.buyerEmail,
       items: storedItems.map((item) => ({
         title: item.productName,
         quantity: item.quantity,
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
     if (error instanceof HttpRequestError) {
       return noStoreJson({ error: error.message }, { status: error.status });
     }
-    if (error instanceof CheckoutValidationError) {
+    if (error instanceof CheckoutValidationError || error instanceof BuyerValidationError) {
       return noStoreJson({ error: error.message }, { status: 400 });
     }
     return noStoreJson({ error: "No se pudo iniciar el pago. Probá nuevamente." }, { status: 502 });

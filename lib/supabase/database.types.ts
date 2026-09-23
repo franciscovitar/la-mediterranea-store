@@ -111,6 +111,10 @@ export type Database = {
       orders: {
         Row: {
           buyer_email: string | null
+          buyer_name: string | null
+          buyer_notes: string | null
+          buyer_phone: string | null
+          fulfillment_method: string | null
           checkout_request_id: string
           created_at: string
           currency: string
@@ -125,6 +129,10 @@ export type Database = {
         }
         Insert: {
           buyer_email?: string | null
+          buyer_name?: string | null
+          buyer_notes?: string | null
+          buyer_phone?: string | null
+          fulfillment_method?: string | null
           checkout_request_id: string
           created_at?: string
           currency?: string
@@ -139,6 +147,10 @@ export type Database = {
         }
         Update: {
           buyer_email?: string | null
+          buyer_name?: string | null
+          buyer_notes?: string | null
+          buyer_phone?: string | null
+          fulfillment_method?: string | null
           checkout_request_id?: string
           created_at?: string
           currency?: string
@@ -152,6 +164,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      order_notifications: {
+        Row: {
+          created_at: string
+          kind: string
+          last_error: string | null
+          order_id: string
+          provider_email_id: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          kind: string
+          last_error?: string | null
+          order_id: string
+          provider_email_id?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          kind?: string
+          last_error?: string | null
+          order_id?: string
+          provider_email_id?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_events: {
         Row: {
@@ -305,6 +358,14 @@ export type Database = {
         }
         Returns: string
       }
+      claim_order_notification: {
+        Args: { p_kind: string; p_order_id: string }
+        Returns: boolean
+      }
+      complete_order_notification: {
+        Args: { p_kind: string; p_order_id: string; p_provider_email_id: string }
+        Returns: boolean
+      }
       create_checkout_order: {
         Args: { p_buyer_email?: string; p_items: Json; p_request_id: string }
         Returns: {
@@ -313,6 +374,27 @@ export type Database = {
           provider_order_id: string
           total_amount: number
         }[]
+      }
+      create_checkout_order_v2: {
+        Args: {
+          p_buyer_email?: string
+          p_buyer_name: string
+          p_buyer_notes?: string
+          p_buyer_phone: string
+          p_fulfillment_method: string
+          p_items: Json
+          p_request_id: string
+        }
+        Returns: {
+          checkout_url: string
+          order_id: string
+          provider_order_id: string
+          total_amount: number
+        }[]
+      }
+      fail_order_notification: {
+        Args: { p_error: string; p_kind: string; p_order_id: string }
+        Returns: boolean
       }
     }
     Enums: {

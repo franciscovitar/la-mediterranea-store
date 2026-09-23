@@ -45,11 +45,11 @@ test("checkout fingerprint is stable across line ordering", () => {
   const a = checkoutFingerprint([
     { productId: "b", quantity: 1 },
     { productId: "a", colorKey: "x", size: "M", quantity: 2 },
-  ], " USER@MAIL.COM ");
+  ], { buyerName: " María José Pérez ", buyerPhone: " 351 5551234 ", buyerEmail: " USER@MAIL.COM ", fulfillmentMethod: "pickup" });
   const b = checkoutFingerprint([
     { productId: "a", colorKey: "x", size: "M", quantity: 2 },
     { productId: "b", quantity: 1 },
-  ], "user@mail.com");
+  ], { buyerName: "María José Pérez", buyerPhone: "351 5551234", buyerEmail: "user@mail.com", fulfillmentMethod: "pickup" });
   assert.equal(a, b);
 });
 
@@ -81,4 +81,57 @@ test("saved cart drops products or variants that no longer exist", () => {
     { productId: "remera_algodon", colorKey: "invalido", size: "M", quantity: 1 },
   ], products);
   assert.deepEqual(reconciled, []);
+});
+
+
+import { BuyerValidationError, normalizeBuyerDetails } from "../lib/commerce/buyer";
+
+test("buyer details normalize the real checkout fields", () => {
+  const buyer = normalizeBuyerDetails({
+    buyerName: "  María   José Pérez ",
+    buyerPhone: " 351 555-1234 ",
+    buyerEmail: " USER@MAIL.COM ",
+    buyerNotes: " retirar el finde ",
+    fulfillmentMethod: "pickup",
+  });
+  assert.deepEqual(buyer, {
+    buyerName: "María José Pérez",
+    buyerPhone: "351 555-1234",
+    buyerEmail: "user@mail.com",
+    buyerNotes: "retirar el finde",
+    fulfillmentMethod: "pickup",
+  });
+});
+
+test("buyer name, phone and fulfillment method are required", () => {
+  assert.throws(() => normalizeBuyerDetails({
+    buyerName: "",
+    buyerPhone: "3515551234",
+    fulfillmentMethod: "pickup",
+  }), BuyerValidationError);
+  assert.throws(() => normalizeBuyerDetails({
+    buyerName: "María Pérez",
+    buyerPhone: "123",
+    fulfillmentMethod: "pickup",
+  }), BuyerValidationError);
+  assert.throws(() => normalizeBuyerDetails({
+    buyerName: "María Pérez",
+    buyerPhone: "3515551234",
+    fulfillmentMethod: "courier",
+  }), BuyerValidationError);
+});
+
+test("checkout fingerprint changes when operational buyer data changes", () => {
+  const lines = [{ productId: "botella", quantity: 1 }];
+  const pickup = checkoutFingerprint(lines, {
+    buyerName: "María Pérez",
+    buyerPhone: "3515551234",
+    fulfillmentMethod: "pickup",
+  });
+  const delivery = checkoutFingerprint(lines, {
+    buyerName: "María Pérez",
+    buyerPhone: "3515551234",
+    fulfillmentMethod: "delivery",
+  });
+  assert.notEqual(pickup, delivery);
 });
