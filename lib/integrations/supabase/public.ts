@@ -5,7 +5,8 @@ import { readCatalog } from "@/lib/integrations/supabase/catalog";
 export async function getPublicCatalog(): Promise<Product[]> {
   const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
   if (!configured) {
-    if (process.env.NODE_ENV !== "production") {
+    const safeFixtureContext = process.env.NODE_ENV !== "production" || process.env.VERCEL_ENV === "preview";
+    if (safeFixtureContext) {
       return bootstrapProducts;
     }
     throw new Error("El catálogo productivo no tiene Supabase configurado.");
