@@ -224,7 +224,18 @@ export function Storefront({
               <span className="eyebrow light"><i /> Más que merchandising</span>
               <h2>Apoyás la música.<br />Transformás futuros.</h2>
               <p>La tienda conserva el espíritu de la preventa original: acercar productos de La Mediterránea de una forma clara, simple y cercana, mientras cada compra acompaña el proyecto educativo.</p>
-              <a href="#productos">Volver al catálogo <span aria-hidden="true">→</span></a>
+              <p className="about-project-copy">La Orquesta-Escuela Mediterránea es un proyecto de Kolektor y Fundación Pro Arte Córdoba que utiliza la práctica colectiva de la música como herramienta de inclusión, integración social y educación en valores.</p>
+              <div className="project-partners" aria-label="Organizaciones del proyecto">
+                <span>Un proyecto de</span>
+                <div>
+                  <span className="partner-card"><img src="/brand/kolektor.png" alt="Kolektor" /></span>
+                  <span className="partner-card"><img src="/brand/proarte.png" alt="Fundación Pro Arte Córdoba" /></span>
+                </div>
+              </div>
+              <div className="about-actions">
+                <a href="#productos">Volver al catálogo <span aria-hidden="true">→</span></a>
+                <span className="about-tagline">Llevá la música con vos ♪</span>
+              </div>
             </div>
           </div>
         </section>
@@ -233,7 +244,7 @@ export function Storefront({
       <footer>
         <div className="container footer-inner">
           <a className="brand footer-brand" href="#inicio"><img src="/brand/logo.png" alt="" /><span>La Mediterránea</span></a>
-          <p>Orquesta-Escuela Infantil y Juvenil</p>
+          <p>Orquesta-Escuela Mediterránea · Fundación Pro Arte Córdoba</p>
           <a href="#productos">Tienda oficial ↑</a>
         </div>
       </footer>
