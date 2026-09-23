@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 
 const port = 3210;
 const origin = "http://127.0.0.1:" + port;
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 
-const child = spawn(npm, ["run", "dev", "--", "-p", String(port)], {
+const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "-p", String(port)], {
   env: {
     ...process.env,
     NEXT_PUBLIC_SUPABASE_URL: "",
@@ -40,6 +40,19 @@ async function json(path, init) {
   const response = await fetch(origin + path, init);
   const body = await response.json();
   return { response, body };
+}
+
+async function stopServer() {
+  if (child.exitCode !== null) return;
+  child.kill("SIGTERM");
+  await Promise.race([
+    once(child, "exit"),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]);
+  if (child.exitCode === null) {
+    child.kill("SIGKILL");
+    await once(child, "exit").catch(() => undefined);
+  }
 }
 
 try {
@@ -86,7 +99,5 @@ try {
 
   console.log("critical journey smoke: PASS");
 } finally {
-  child.kill("SIGTERM");
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  if (!child.killed) child.kill("SIGKILL");
+  await stopServer();
 }
