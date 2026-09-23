@@ -1,13 +1,15 @@
-export default function CheckoutPendingPage() {
+import { CheckoutResultClient } from "@/components/CheckoutResultClient";
+
+export default async function CheckoutPendingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ order_id?: string }>;
+}) {
+  const { order_id: orderId } = await searchParams;
   return (
     <main className="checkout-shell">
       <div className="checkout-page">
-        <section className="result-card">
-          <span className="eyebrow">Pago pendiente</span>
-          <h1>Estamos esperando la confirmación</h1>
-          <p>Tu pedido queda registrado y el servidor actualizará su estado cuando Mercado Pago confirme el resultado.</p>
-          <a href="/">Volver a la tienda</a>
-        </section>
+        <CheckoutResultClient mode="pending" orderId={orderId} />
       </div>
     </main>
   );

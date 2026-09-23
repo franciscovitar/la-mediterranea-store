@@ -1,13 +1,15 @@
-export default function CheckoutFailurePage() {
+import { CheckoutResultClient } from "@/components/CheckoutResultClient";
+
+export default async function CheckoutFailurePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ order_id?: string }>;
+}) {
+  const { order_id: orderId } = await searchParams;
   return (
     <main className="checkout-shell">
       <div className="checkout-page">
-        <section className="result-card">
-          <span className="eyebrow">Pago no completado</span>
-          <h1>No se pudo completar el pago</h1>
-          <p>Podés volver al carrito y probar nuevamente. El pedido no se marca como pagado desde el navegador.</p>
-          <a href="/checkout">Volver al checkout</a>
-        </section>
+        <CheckoutResultClient mode="failure" orderId={orderId} />
       </div>
     </main>
   );
