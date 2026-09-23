@@ -1,7 +1,7 @@
 import { CheckoutValidationError, normalizeCheckoutLines } from "@/lib/commerce/checkout";
 import { getIntegrationReadiness } from "@/lib/integrations/config";
 import { createMercadoPagoOrder } from "@/lib/integrations/mercadopago/server";
-import { attachMercadoPagoOrder, createPendingStoreOrder, markCheckoutError } from "@/lib/integrations/supabase/server";
+import { attachMercadoPagoOrder, createPendingStoreOrder, getStoreOrderItems, markCheckoutError } from "@/lib/integrations/supabase/server";
 import { HttpRequestError, noStoreJson, readJsonBody } from "@/lib/http/request";
 
 export const runtime = "nodejs";
@@ -14,18 +14,14 @@ export async function POST(request: Request) {
   const readiness = getIntegrationReadiness();
   if (!readiness.checkoutReady) {
     return noStoreJson({
-      error: "El checkout real todavía no está conectado.",
+      error: "El pago online no está disponible por el momento.",
       missing: readiness.missingForCheckout,
     }, { status: 503 });
   }
 
   let localOrderId: string | undefined;
   try {
-    const body = await readJsonBody<{
-      requestId?: unknown;
-      buyerEmail?: unknown;
-      lines?: unknown;
-    }>(request);
+    const body = await readJsonBody<{ requestId?: unknown; buyerEmail?: unknown; lines?: unknown }>(request);
 
     if (typeof body.requestId !== "string" || !uuid.test(body.requestId)) {
       return noStoreJson({ error: "Identificador de checkout inválido." }, { status: 400 });
@@ -39,22 +35,24 @@ export async function POST(request: Request) {
     }
 
     const lines = normalizeCheckoutLines(body.lines);
-    const localOrder = await createPendingStoreOrder({
-      requestId: body.requestId,
-      buyerEmail,
-      lines,
-    });
+    const localOrder = await createPendingStoreOrder({ requestId: body.requestId, buyerEmail, lines });
     localOrderId = localOrder.id;
 
     if (localOrder.checkoutUrl && localOrder.providerOrderId) {
       return noStoreJson({ checkoutUrl: localOrder.checkoutUrl });
     }
 
+    const storedItems = await getStoreOrderItems(localOrder.id);
     const provider = await createMercadoPagoOrder({
       requestId: body.requestId,
       localOrderId: localOrder.id,
       total: localOrder.total,
       buyerEmail,
+      items: storedItems.map((item) => ({
+        title: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
     });
 
     await attachMercadoPagoOrder({

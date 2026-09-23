@@ -17,6 +17,12 @@ type StorefrontProps = {
   previewMode?: boolean;
 };
 
+type CartFeedback = {
+  name: string;
+  detail: string;
+  image: string;
+};
+
 export function Storefront({
   catalog = baseProducts,
   cartStorageKey = CART_STORAGE_KEY,
@@ -26,6 +32,7 @@ export function Storefront({
   const [category, setCategory] = useState("Todos");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartFeedback, setCartFeedback] = useState<CartFeedback | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -46,18 +53,14 @@ export function Storefront({
 
   useEffect(() => {
     document.body.classList.toggle("cart-is-open", cartOpen);
-    if (!cartOpen) return () => document.body.classList.remove("cart-is-open");
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setCartOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.classList.remove("cart-is-open");
-      window.removeEventListener("keydown", onKeyDown);
-    };
+    return () => document.body.classList.remove("cart-is-open");
   }, [cartOpen]);
+
+  useEffect(() => {
+    if (!cartFeedback) return;
+    const timeout = window.setTimeout(() => setCartFeedback(null), 2600);
+    return () => window.clearTimeout(timeout);
+  }, [cartFeedback]);
 
   const activeProducts = useMemo(
     () => catalog.filter((product) => product.active),
@@ -74,6 +77,11 @@ export function Storefront({
 
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartTotal = cart.reduce((sum, line) => sum + line.quantity * line.price, 0);
+
+  function openCart() {
+    setCartFeedback(null);
+    setCartOpen(true);
+  }
 
   function addToCart(payload: AddToCartPayload) {
     const key = lineKey(payload);
@@ -94,6 +102,18 @@ export function Storefront({
         size: payload.size,
       }];
     });
+
+    const detail = [
+      payload.colorLabel,
+      payload.size ? `Talle ${payload.size}` : null,
+      payload.quantity > 1 ? `x${payload.quantity}` : null,
+    ].filter(Boolean).join(" · ");
+
+    setCartFeedback({
+      name: payload.product.name,
+      detail,
+      image: payload.image,
+    });
   }
 
   function stepLine(key: string, delta: number) {
@@ -113,6 +133,7 @@ export function Storefront({
           </div>
         </div>
       ) : null}
+
       <header className="topbar">
         <div className="container topbar-inner">
           <a className="brand" href="#inicio" aria-label="Ir al inicio">
@@ -121,7 +142,7 @@ export function Storefront({
           </a>
           <nav className="topbar-actions" aria-label="Navegación principal">
             <a className="catalog-link" href="#productos">Productos</a>
-            <button className="cart-button" onClick={() => setCartOpen(true)} type="button">
+            <button aria-haspopup="dialog" className="cart-button" onClick={openCart} type="button">
               <span>Carrito</span><b>{itemCount}</b>
             </button>
           </nav>
@@ -145,6 +166,7 @@ export function Storefront({
                 <span>Catálogo oficial</span><span>Precios actualizados</span><span>Compra simple</span>
               </div>
             </div>
+
             <div className="hero-card" aria-label="Selección destacada">
               <div className="hero-logo"><img src="/brand/logo.png" alt="La Mediterránea" /></div>
               <div className="mini-products" aria-hidden="true">
@@ -181,7 +203,7 @@ export function Storefront({
 
             <div className="catalog-status" aria-live="polite">
               <span>{visibleProducts.length} {visibleProducts.length === 1 ? "producto" : "productos"}</span>
-              {itemCount > 0 ? <button onClick={() => setCartOpen(true)} type="button">Ver carrito · {formatMoney(cartTotal)}</button> : null}
+              {itemCount > 0 ? <button onClick={openCart} type="button">Ver carrito · {formatMoney(cartTotal)}</button> : null}
             </div>
 
             <div className="product-grid">
@@ -211,10 +233,23 @@ export function Storefront({
         </div>
       </footer>
 
-      {itemCount > 0 ? (
-        <button className="floating-cart" onClick={() => setCartOpen(true)} type="button">
-          <span>Carrito · {itemCount}</span><strong>{formatMoney(cartTotal)}</strong>
-        </button>
+      <div className="sr-only" aria-live="polite">
+        {cartFeedback ? `${cartFeedback.name} agregado al carrito.` : ""}
+      </div>
+
+      {cartFeedback ? (
+        <div className="cart-toast">
+          <img alt="" src={cartFeedback.image} />
+          <div className="cart-toast-copy">
+            <span>Agregado al carrito</span>
+            <strong>{cartFeedback.name}</strong>
+            {cartFeedback.detail ? <small>{cartFeedback.detail}</small> : null}
+          </div>
+          <div className="cart-toast-actions">
+            <button onClick={openCart} type="button">Ver carrito</button>
+            <button aria-label="Cerrar aviso" className="cart-toast-close" onClick={() => setCartFeedback(null)} type="button">×</button>
+          </div>
+        </div>
       ) : null}
 
       <CartDrawer

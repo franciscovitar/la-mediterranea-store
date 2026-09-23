@@ -8,6 +8,21 @@ type PendingOrderRow = {
   provider_order_id: string | null;
 };
 
+type StoreOrderItemRow = {
+  product_name: string;
+  color_label: string | null;
+  size: string | null;
+  quantity: number;
+  unit_price: number | string;
+  line_total: number | string;
+};
+
+type StoreOrderStatusRow = {
+  id: string;
+  status: string;
+  total_amount: number | string;
+};
+
 async function supabaseRequest<T>(path: string, init: RequestInit): Promise<T> {
   const { url, secretKey } = getSupabaseServerConfig();
   const response = await fetch(url + "/rest/v1/" + path, {
@@ -66,6 +81,9 @@ export async function attachMercadoPagoOrder(input: {
     body: JSON.stringify({
       mp_order_id: input.providerOrderId,
       mp_checkout_url: input.checkoutUrl,
+      status: "awaiting_payment",
+      provider_status: null,
+      provider_status_detail: null,
       updated_at: new Date().toISOString(),
     }),
   });
@@ -105,4 +123,28 @@ export async function applyMercadoPagoEvent(input: {
       p_payload: input.payload,
     }),
   });
+}
+
+
+export async function getStoreOrderItems(orderId: string) {
+  const query = "order_items?order_id=eq." + encodeURIComponent(orderId)
+    + "&select=product_name,color_label,size,quantity,unit_price,line_total";
+  const rows = await supabaseRequest<StoreOrderItemRow[]>(query, { method: "GET" });
+  return rows.map((row) => ({
+    productName: row.product_name,
+    colorLabel: row.color_label ?? undefined,
+    size: row.size ?? undefined,
+    quantity: Number(row.quantity),
+    unitPrice: Number(row.unit_price),
+    lineTotal: Number(row.line_total),
+  }));
+}
+
+export async function getStoreOrderStatus(orderId: string) {
+  const query = "orders?id=eq." + encodeURIComponent(orderId)
+    + "&select=id,status,total_amount&limit=1";
+  const rows = await supabaseRequest<StoreOrderStatusRow[]>(query, { method: "GET" });
+  const row = rows[0];
+  if (!row) return null;
+  return { id: row.id, status: row.status, total: Number(row.total_amount) };
 }

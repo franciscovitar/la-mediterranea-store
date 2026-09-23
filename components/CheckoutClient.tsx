@@ -22,16 +22,7 @@ type Quote = {
   total: number;
 };
 
-type Readiness = {
-  supabaseServer: boolean;
-  supabasePublic: boolean;
-  mercadoPagoApi: boolean;
-  mercadoPagoWebhook: boolean;
-  siteUrl: boolean;
-  checkoutReady: boolean;
-  productionReady: boolean;
-  missingForCheckout: string[];
-};
+type Readiness = { checkoutReady: boolean };
 
 export function CheckoutClient() {
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -51,11 +42,20 @@ export function CheckoutClient() {
         const catalogResponse = await fetch("/api/catalog", { cache: "no-store" });
         const catalogData = await catalogResponse.json() as { products?: Product[]; error?: string };
         if (!catalogResponse.ok || !catalogData.products) throw new Error(catalogData.error ?? "No se pudo leer el catálogo.");
+
         const saved = window.localStorage.getItem(CART_STORAGE_KEY);
         const reconciled = saved ? reconcileCart(JSON.parse(saved), catalogData.products) : [];
         if (!cancelled) setCart(reconciled);
         window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(reconciled));
-        const lines = reconciled.map((line) => ({ productId: line.productId, colorKey: line.colorKey, colorLabel: line.colorLabel, size: line.size, quantity: line.quantity }));
+
+        const lines = reconciled.map((line) => ({
+          productId: line.productId,
+          colorKey: line.colorKey,
+          colorLabel: line.colorLabel,
+          size: line.size,
+          quantity: line.quantity,
+        }));
+
         const [readinessResponse, quoteResponse] = await Promise.all([
           fetch("/api/integrations/readiness", { cache: "no-store" }),
           lines.length
@@ -83,7 +83,7 @@ export function CheckoutClient() {
         if (!cancelled) setLoading(false);
       }
     }
-    load();
+    void load();
     return () => { cancelled = true; };
   }, []);
 
@@ -109,16 +109,10 @@ export function CheckoutClient() {
       const response = await fetch("/api/checkout/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requestId,
-          buyerEmail,
-          lines: canonicalLines,
-        }),
+        body: JSON.stringify({ requestId, buyerEmail, lines: canonicalLines }),
       });
       const data = await response.json() as { checkoutUrl?: string; error?: string };
-      if (!response.ok || !data.checkoutUrl) {
-        throw new Error(data.error ?? "No se pudo iniciar Mercado Pago.");
-      }
+      if (!response.ok || !data.checkoutUrl) throw new Error(data.error ?? "No se pudo iniciar Mercado Pago.");
       window.location.assign(data.checkoutUrl);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se pudo iniciar el pago.");
@@ -134,7 +128,8 @@ export function CheckoutClient() {
     return (
       <div className="checkout-card checkout-empty">
         <strong>Tu carrito está vacío.</strong>
-        <div><a href="/">Volver al catálogo</a></div>
+        <p className="checkout-help">Volvé al catálogo para elegir tus productos.</p>
+        <div><a href="/">Ver productos</a></div>
       </div>
     );
   }
@@ -142,7 +137,10 @@ export function CheckoutClient() {
   return (
     <div className="checkout-grid">
       <section className="checkout-card">
-        <h2>Tu pedido</h2>
+        <div className="checkout-card-heading">
+          <span className="eyebrow">Resumen</span>
+          <h2>Tu pedido</h2>
+        </div>
         {quote?.lines.map((line) => (
           <article className="checkout-line" key={line.key}>
             <img alt="" src={line.image} />
@@ -165,12 +163,15 @@ export function CheckoutClient() {
         ) : null}
       </section>
 
-      <aside className="checkout-card">
-        <h2>Finalizar compra</h2>
-        <p className="checkout-help">El precio se vuelve a calcular en el servidor. El navegador no decide cuánto se cobra.</p>
+      <aside className="checkout-card checkout-payment-card">
+        <div className="checkout-card-heading">
+          <span className="eyebrow">Pago seguro</span>
+          <h2>Finalizar compra</h2>
+        </div>
+        <p className="checkout-help">Al continuar te llevamos a Mercado Pago para completar el pago. Antes de abrirlo, el pedido y el importe se validan nuevamente.</p>
 
         <div className="checkout-field">
-          <label htmlFor="checkout-email">Email (opcional)</label>
+          <label htmlFor="checkout-email">Email para el comprobante <span>(opcional)</span></label>
           <input
             autoComplete="email"
             id="checkout-email"
@@ -185,18 +186,14 @@ export function CheckoutClient() {
           {paying ? "Abriendo Mercado Pago…" : "Pagar con Mercado Pago"}
         </button>
 
+        <p className="checkout-secure-note"><span aria-hidden="true">✓</span> El estado final del pago se confirma de forma segura desde el servidor.</p>
+
         {!readiness?.checkoutReady ? (
-          <div className="checkout-status">
-            <strong>Checkout preparado, todavía no conectado</strong>
-            <p>Cuando estén las cuentas, se cargan las credenciales y se aplica la base. No hace falta rehacer esta pantalla.</p>
+          <div className="checkout-status checkout-unavailable">
+            <strong>Pago online temporalmente no disponible</strong>
+            <p>Tu pedido sigue guardado en el carrito. Podés volver más tarde sin tener que armarlo de nuevo.</p>
           </div>
         ) : null}
-
-        <div className="integration-grid" aria-label="Estado de integraciones">
-          <div className="integration-row"><span>Base de datos</span><b className={readiness?.supabaseServer ? "ready" : "pending"}>{readiness?.supabaseServer ? "Lista" : "Pendiente"}</b></div>
-          <div className="integration-row"><span>Mercado Pago</span><b className={readiness?.mercadoPagoApi ? "ready" : "pending"}>{readiness?.mercadoPagoApi ? "Listo" : "Pendiente"}</b></div>
-          <div className="integration-row"><span>Webhook seguro</span><b className={readiness?.mercadoPagoWebhook ? "ready" : "pending"}>{readiness?.mercadoPagoWebhook ? "Listo" : "Pendiente"}</b></div>
-        </div>
 
         {error ? <p className="checkout-error">{error}</p> : null}
       </aside>
