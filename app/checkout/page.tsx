@@ -9,7 +9,7 @@ export default function CheckoutPage() {
           <a className="checkout-back" href="/">← Seguir viendo productos</a>
         </header>
         <h1 className="checkout-title">Revisá tu pedido</h1>
-        <p className="checkout-lead">Esta pantalla ya usa un cálculo de precios del lado del servidor y está lista para enchufar la base de datos y Mercado Pago cuando tengamos los accesos.</p>
+        <p className="checkout-lead">Confirmá que esté todo bien y seguí a Mercado Pago para completar la compra.</p>
         <CheckoutClient />
       </div>
     </main>
