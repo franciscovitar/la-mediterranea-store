@@ -142,8 +142,20 @@ export function Storefront({
           </a>
           <nav className="topbar-actions" aria-label="Navegación principal">
             <a className="catalog-link" href="#productos">Productos</a>
-            <button aria-haspopup="dialog" className="cart-button" onClick={openCart} type="button">
-              <span>Carrito</span><b>{itemCount}</b>
+            <button
+              aria-haspopup="dialog"
+              aria-label={itemCount ? `Abrir carrito, ${itemCount} ${itemCount === 1 ? "producto" : "productos"}` : "Abrir carrito"}
+              className="cart-button"
+              onClick={openCart}
+              type="button"
+            >
+              <svg aria-hidden="true" className="cart-icon" fill="none" viewBox="0 0 24 24">
+                <path d="M3.5 4.5h2l1.45 9.1a2 2 0 0 0 1.98 1.68h7.72a2 2 0 0 0 1.93-1.48l1.2-4.48H6.18" />
+                <circle cx="9.25" cy="19" r="1.25" />
+                <circle cx="17.25" cy="19" r="1.25" />
+              </svg>
+              <span>Carrito</span>
+              <b>{itemCount}</b>
             </button>
           </nav>
         </div>
@@ -219,8 +231,7 @@ export function Storefront({
 
         <section className="about" id="proyecto">
           <div className="container about-grid">
-            <div className="about-mark" aria-hidden="true">♪</div>
-            <div>
+            <div className="about-copy">
               <span className="eyebrow light"><i /> Más que merchandising</span>
               <h2>Apoyás la música.<br />Transformás futuros.</h2>
               <p>La tienda conserva el espíritu de la preventa original: acercar productos de La Mediterránea de una forma clara, simple y cercana, mientras cada compra acompaña el proyecto educativo.</p>
