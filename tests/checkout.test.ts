@@ -103,10 +103,11 @@ test("buyer details normalize the real checkout fields", () => {
   });
 });
 
-test("buyer name, phone and fulfillment method are required", () => {
+test("buyer name, phone, email and fulfillment method are required", () => {
   assert.throws(() => normalizeBuyerDetails({
     buyerName: "",
     buyerPhone: "3515551234",
+    buyerEmail: "maria@example.com",
     fulfillmentMethod: "pickup",
   }), BuyerValidationError);
   assert.throws(() => normalizeBuyerDetails({
@@ -117,6 +118,12 @@ test("buyer name, phone and fulfillment method are required", () => {
   assert.throws(() => normalizeBuyerDetails({
     buyerName: "María Pérez",
     buyerPhone: "3515551234",
+    fulfillmentMethod: "pickup",
+  }), BuyerValidationError);
+  assert.throws(() => normalizeBuyerDetails({
+    buyerName: "María Pérez",
+    buyerPhone: "3515551234",
+    buyerEmail: "maria@example.com",
     fulfillmentMethod: "courier",
   }), BuyerValidationError);
 });
@@ -131,6 +138,7 @@ test("checkout fingerprint changes when operational buyer data changes", () => {
   const delivery = checkoutFingerprint(lines, {
     buyerName: "María Pérez",
     buyerPhone: "3515551234",
+    buyerEmail: "maria@example.com",
     fulfillmentMethod: "delivery",
   });
   assert.notEqual(pickup, delivery);

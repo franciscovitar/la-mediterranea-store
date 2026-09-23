@@ -8,7 +8,7 @@ This checklist is the final gate between the prepared local/integration-ready bu
 - Download the full admin backup.
 - Confirm which products/variants should track stock.
 - Confirm fulfillment: pickup, delivery, shipping, or a combination.
-- Confirm buyer fields and fulfillment copy. Current V1 requires name, phone/WhatsApp and pickup vs delivery-to-coordinate; email and notes are optional.
+- Confirm buyer fields and fulfillment copy. Current V1 requires name, phone/WhatsApp, email and pickup vs delivery-to-coordinate; notes are optional.
 
 ## Supabase
 - Confirm the configured Supabase project contains the committed migrations and seed.
@@ -24,7 +24,13 @@ This checklist is the final gate between the prepared local/integration-ready bu
 - Test a payment, pending payment, failure, duplicate callback, and duplicate checkout attempt.
 - Verify the local order only reaches paid from server-confirmed provider state.
 
-## Transactional email\n- Verify a sending domain in Resend.\n- Configure `RESEND_API_KEY`, `ORDER_EMAIL_FROM`, and `ORDER_NOTIFICATION_EMAIL` in the host secret settings.\n- Send a paid-order test and verify exactly one merchant email; when buyer email is present, verify exactly one buyer confirmation.\n- Confirm duplicate Mercado Pago webhook delivery does not duplicate emails.\n\n## Deployment
+## Transactional email
+- Verify a sending domain in Resend.
+- Configure `RESEND_API_KEY`, `ORDER_EMAIL_FROM`, and `ORDER_NOTIFICATION_EMAIL` in the host secret settings.
+- Send a paid-order test and verify exactly one merchant email and exactly one buyer confirmation.
+- Confirm duplicate Mercado Pago webhook delivery does not duplicate emails.
+
+## Deployment
 - Deploy the Next.js app on the chosen application host.
 - Add environment variables in the host's secret settings.
 - Confirm `/api/health` returns `ok: true`.

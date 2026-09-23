@@ -3,7 +3,7 @@ export type FulfillmentMethod = "pickup" | "delivery";
 export type BuyerDetails = {
   buyerName: string;
   buyerPhone: string;
-  buyerEmail?: string;
+  buyerEmail: string;
   buyerNotes?: string;
   fulfillmentMethod: FulfillmentMethod;
 };
@@ -33,7 +33,7 @@ export function normalizeBuyerDetails(input: {
   }
 
   const rawEmail = typeof input.buyerEmail === "string" ? input.buyerEmail.trim().toLowerCase() : "";
-  if (rawEmail && (rawEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail))) {
+  if (!rawEmail || rawEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
     throw new BuyerValidationError("Ingresá un email válido.");
   }
 
@@ -49,7 +49,7 @@ export function normalizeBuyerDetails(input: {
   return {
     buyerName,
     buyerPhone,
-    buyerEmail: rawEmail || undefined,
+    buyerEmail: rawEmail,
     buyerNotes: buyerNotes || undefined,
     fulfillmentMethod: input.fulfillmentMethod,
   };

@@ -31,7 +31,11 @@ The adapter is prepared for **Checkout Pro via Orders API**.
 
 The server sends an `X-Idempotency-Key` when creating the Mercado Pago order. The webhook verifies the HMAC signature and then fetches the provider order directly before mutating the local order.
 
-## Order contact and transactional email\n\nCheckout now persists buyer name, phone/WhatsApp, optional email/notes, and pickup vs delivery-to-coordinate through the additive `create_checkout_order_v2` RPC. Paid-order emails use Resend only after Supabase records the order as `paid`. Merchant and buyer emails are claimed in Supabase and also use provider idempotency keys to reduce duplicate delivery risk. Configure `RESEND_API_KEY`, `ORDER_EMAIL_FROM`, and `ORDER_NOTIFICATION_EMAIL`; no secret values belong in Git.\n\n## Current safe behavior without credentials
+## Order contact and transactional email
+
+Checkout now persists buyer name, phone/WhatsApp, required email, optional notes, and pickup vs delivery-to-coordinate through the additive `create_checkout_order_v2` RPC. Paid-order emails use Resend only after Supabase records the order as `paid`. Merchant and buyer emails are claimed in Supabase and also use provider idempotency keys to reduce duplicate delivery risk. Configure `RESEND_API_KEY`, `ORDER_EMAIL_FROM`, and `ORDER_NOTIFICATION_EMAIL`; no secret values belong in Git.
+
+## Current safe behavior without credentials
 
 - The storefront reads the active catalog from Supabase and reconciles saved carts against it. Production no longer silently falls back to bootstrap catalog data if Supabase public configuration is missing.
 - `/checkout` recalculates the order from the server-owned Supabase catalog.
@@ -51,7 +55,9 @@ Do not call payments, stock or admin "done" merely because environment variables
 - signed webhook is received;
 - provider status is fetched server-side;
 - duplicate checkout attempts do not create duplicate provider orders;
-- payment success does not depend on return-page query parameters;\n- the success return page does not clear the cart or mark payment as final before server confirmation;\n- checkout idempotency is tied to the canonical cart + email fingerprint so a changed order gets a new request id;
+- payment success does not depend on return-page query parameters;
+- the success return page does not clear the cart or mark payment as final before server confirmation;
+- checkout idempotency is tied to the canonical cart + buyer-details fingerprint so a changed order gets a new request id;
 - stock behavior is tested with tracked and untracked products;
 - HTTPS production deployment is live.
 

@@ -208,13 +208,14 @@ export function CheckoutClient() {
           </div>
 
           <div className="checkout-field">
-            <label htmlFor="checkout-email">Email <span>(opcional, para recibir confirmación)</span></label>
+            <label htmlFor="checkout-email">Email <b aria-hidden="true">*</b> <span>(para recibir confirmación)</span></label>
             <input
               autoComplete="email"
               id="checkout-email"
               maxLength={254}
               onChange={(event) => setBuyerEmail(event.target.value)}
               placeholder="tu@email.com"
+              required
               type="email"
               value={buyerEmail}
             />
