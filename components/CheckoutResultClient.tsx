@@ -14,7 +14,8 @@ export function CheckoutResultClient({ orderId, mode }: { orderId?: string; mode
   const [checking, setChecking] = useState(Boolean(orderId));
 
   useEffect(() => {
-    if (!orderId) {
+    const stableOrderId = orderId;
+    if (!stableOrderId) {
       setChecking(false);
       return;
     }
@@ -26,7 +27,7 @@ export function CheckoutResultClient({ orderId, mode }: { orderId?: string; mode
     async function check() {
       attempts += 1;
       try {
-        const response = await fetch("/api/checkout/status?orderId=" + encodeURIComponent(orderId), { cache: "no-store" });
+        const response = await fetch("/api/checkout/status?orderId=" + encodeURIComponent(stableOrderId), { cache: "no-store" });
         if (response.ok) {
           const data = await response.json() as { order?: { status: string; total: number } };
           if (!cancelled && data.order) {
