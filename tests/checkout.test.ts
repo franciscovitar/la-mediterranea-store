@@ -133,6 +133,7 @@ test("checkout fingerprint changes when operational buyer data changes", () => {
   const pickup = checkoutFingerprint(lines, {
     buyerName: "María Pérez",
     buyerPhone: "3515551234",
+    buyerEmail: "maria@example.com",
     fulfillmentMethod: "pickup",
   });
   const delivery = checkoutFingerprint(lines, {
