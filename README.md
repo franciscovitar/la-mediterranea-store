@@ -2,7 +2,7 @@
 
 Reconstruction of the public merchandising storefront for **La Mediterránea — Orquesta-Escuela Infantil y Juvenil**.
 
-The storefront reads its operational catalog from Supabase and keeps the client experience unchanged. Mercado Pago remains intentionally disconnected until its real credentials are available.
+The storefront reads its operational catalog from Supabase and keeps the client experience unchanged. Mercado Pago was validated end-to-end with test credentials; production credentials remain a launch-time handoff.
 
 ## Current checkpoint
 
@@ -13,19 +13,19 @@ The storefront reads its operational catalog from Supabase and keeps the client 
 - Product color/size variants where defined by the current catalog.
 - Persistent client-side cart with quantity controls.
 - Server-authoritative checkout quote endpoint.
-- Checkout UI and payment result pages.
+- Checkout UI with required buyer name/phone, pickup or delivery-to-coordinate, optional notes/email, and payment result pages.
 - Supabase schema + seed applied for products, variants, stock, orders and admin authorization.
 - Public storefront catalog, server-side checkout quote and authenticated admin persistence use Supabase.
 - Supabase Storage serves product images with administrator-only writes.
 - Magic Link authentication protects `/admin`; database RLS enforces the administrator role.
 - Mercado Pago Checkout Pro Orders API adapter prepared behind environment variables.
-- Signed Mercado Pago webhook endpoint prepared.
+- Signed Mercado Pago webhook endpoint validated in test, with idempotent paid-order notification hooks.
 - Integration readiness endpoint and admin connection-status page.
 - Admin product duplication, Supabase-backed backup/export/validated restore, and a real catalog preview with checkout disabled.
 - Unit tests for server-side checkout validation and admin export helpers.
 - Idempotency fingerprinting so a changed cart/email cannot accidentally reuse an older payment order.
 - Basic security headers plus safe 404/error states.
-- CI checks for catalog integrity, TypeScript and production build.
+- CI checks for catalog integrity, TypeScript, unit tests, production build and a critical-journey HTTP smoke.
 
 ## Run locally
 

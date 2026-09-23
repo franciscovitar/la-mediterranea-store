@@ -1,6 +1,6 @@
 # Integration-ready checkpoint
 
-Supabase is connected. Mercado Pago remains intentionally disconnected until its real credentials are available.
+Supabase is connected. Mercado Pago test checkout/webhook validation is complete; production credentials remain a launch-time handoff.
 
 ## Why this exists
 
@@ -31,9 +31,13 @@ The adapter is prepared for **Checkout Pro via Orders API**.
 
 The server sends an `X-Idempotency-Key` when creating the Mercado Pago order. The webhook verifies the HMAC signature and then fetches the provider order directly before mutating the local order.
 
+## Order contact and transactional email
+
+Checkout now persists buyer name, phone/WhatsApp, required email, optional notes, and pickup vs delivery-to-coordinate through the additive `create_checkout_order_v2` RPC. Paid-order emails use Resend only after Supabase records the order as `paid`. Merchant and buyer emails are claimed in Supabase and also use provider idempotency keys to reduce duplicate delivery risk. Configure `RESEND_API_KEY`, `ORDER_EMAIL_FROM`, and `ORDER_NOTIFICATION_EMAIL`; no secret values belong in Git.
+
 ## Current safe behavior without credentials
 
-- The storefront reads the active catalog from Supabase and reconciles saved carts against it.
+- The storefront reads the active catalog from Supabase and reconciles saved carts against it. Production no longer silently falls back to bootstrap catalog data if Supabase public configuration is missing.
 - `/checkout` recalculates the order from the server-owned Supabase catalog.
 - The real pay button stays disabled because Mercado Pago is not configured.
 - `/admin` requires Magic Link authentication and persists product, stock and image changes through Supabase RLS/Storage.
@@ -51,7 +55,9 @@ Do not call payments, stock or admin "done" merely because environment variables
 - signed webhook is received;
 - provider status is fetched server-side;
 - duplicate checkout attempts do not create duplicate provider orders;
-- payment success does not depend on return-page query parameters;\n- the success return page does not clear the cart or mark payment as final before server confirmation;\n- checkout idempotency is tied to the canonical cart + email fingerprint so a changed order gets a new request id;
+- payment success does not depend on return-page query parameters;
+- the success return page does not clear the cart or mark payment as final before server confirmation;
+- checkout idempotency is tied to the canonical cart + buyer-details fingerprint so a changed order gets a new request id;
 - stock behavior is tested with tracked and untracked products;
 - HTTPS production deployment is live.
 
@@ -60,7 +66,7 @@ Do not call payments, stock or admin "done" merely because environment variables
 
 Before changing operational data, download the full admin backup from `/admin`. The same panel can restore a validated backup to Supabase only after an explicit administrator confirmation.
 
-## Production email delivery
+## Auth email delivery
 
 Magic Link SSR was validated locally with Resend's test sender and the temporary permitted recipient. Before `franvitar15@gmail.com` can receive production Magic Links, verify a sending domain in Resend (or configure the definitive SMTP sender).
 

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getIntegrationReadiness } from "@/lib/integrations/config";
+import { sendPaidOrderNotifications } from "@/lib/integrations/email/server";
 import { getMercadoPagoOrder, verifyMercadoPagoSignature } from "@/lib/integrations/mercadopago/server";
 import { applyMercadoPagoEvent } from "@/lib/integrations/supabase/server";
 import { HttpRequestError, noStoreJson, readJsonBody } from "@/lib/http/request";
@@ -17,8 +18,6 @@ export async function POST(request: NextRequest) {
     return noStoreJson({ error: "Webhook no configurado." }, { status: 503 });
   }
 
-  // Mercado Pago documents `data.id`; some official SDK examples use `data_id`.
-  // Accept either spelling but still require the HMAC signature before processing.
   const dataId = request.nextUrl.searchParams.get("data.id") ?? request.nextUrl.searchParams.get("data_id");
   const requestId = request.headers.get("x-request-id");
   const signature = request.headers.get("x-signature");
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
     const payloadRecord = isObject(payload) ? payload : {};
     const eventId = String(payloadRecord.id ?? (String(payloadRecord.action ?? "order") + ":" + providerOrder.id + ":" + String(payloadRecord.date_created ?? "")));
 
-    await applyMercadoPagoEvent({
+    const localStatus = await applyMercadoPagoEvent({
       eventId,
       providerOrderId: providerOrder.id,
       localOrderId,
@@ -48,7 +47,16 @@ export async function POST(request: NextRequest) {
       payload,
     });
 
-    return noStoreJson({ received: true });
+    let notifications: string[] = [];
+    if (localStatus === "paid") {
+      const delivery = await sendPaidOrderNotifications(localOrderId);
+      notifications = delivery.results;
+      if (delivery.retryableFailure) {
+        return noStoreJson({ error: "Pago registrado; notificación temporalmente pendiente." }, { status: 503 });
+      }
+    }
+
+    return noStoreJson({ received: true, notifications });
   } catch (error) {
     if (error instanceof HttpRequestError) {
       return noStoreJson({ error: error.message }, { status: error.status });

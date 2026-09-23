@@ -3,11 +3,26 @@ export type StoredCheckoutRequest = {
   fingerprint: string;
 };
 
+export type CheckoutBuyerFingerprint = {
+  buyerName?: string;
+  buyerPhone?: string;
+  buyerEmail?: string;
+  buyerNotes?: string;
+  fulfillmentMethod?: "pickup" | "delivery";
+};
+
 export function checkoutFingerprint(
   lines: Array<{ productId: string; colorKey?: string; size?: string; quantity: number }>,
-  buyerEmail?: string,
+  buyer: CheckoutBuyerFingerprint | string = {},
 ) {
-  const normalizedEmail = buyerEmail?.trim().toLowerCase() ?? "";
+  const details = typeof buyer === "string" ? { buyerEmail: buyer } : buyer;
+  const normalizedBuyer = {
+    buyerName: details.buyerName?.trim().replace(/\s+/g, " ") ?? "",
+    buyerPhone: details.buyerPhone?.trim().replace(/\s+/g, " ") ?? "",
+    buyerEmail: details.buyerEmail?.trim().toLowerCase() ?? "",
+    buyerNotes: details.buyerNotes?.trim() ?? "",
+    fulfillmentMethod: details.fulfillmentMethod ?? "",
+  };
   const normalizedLines = [...lines]
     .map((line) => ({
       productId: line.productId,
@@ -19,7 +34,7 @@ export function checkoutFingerprint(
       [a.productId, a.colorKey, a.size].join("|").localeCompare([b.productId, b.colorKey, b.size].join("|"))
     );
 
-  return JSON.stringify({ buyerEmail: normalizedEmail, lines: normalizedLines });
+  return JSON.stringify({ buyer: normalizedBuyer, lines: normalizedLines });
 }
 
 export function readStoredCheckoutRequest(raw: string | null): StoredCheckoutRequest | null {
