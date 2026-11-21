@@ -292,10 +292,11 @@
   .c-category-card { min-height: 290px; }
   .c-category-card > div { padding: 19px; }
   .c-category-arrow { right: 19px; bottom: 19px; }
-  .c-catalog-layout { grid-template-columns: 1fr; gap: 25px; }
+  .c-catalog-layout { grid-template-columns: minmax(0,1fr); gap: 25px; }
+  .c-filters, .c-results { min-width: 0; }
   .c-filters { border-top: 0; padding: 0; }
   .c-filter-heading { margin-bottom: 14px; }
-  .c-filters fieldset { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+  .c-filters fieldset { display: flex; gap: 8px; min-width: 0; max-width: 100%; overflow-x: auto; padding-bottom: 5px; }
   .c-filters legend { display: none; }
   .c-filter-radio { white-space: nowrap; border: 1px solid #d9dcd0; padding: 9px 12px; background: #fafaf7; }
   .c-filter-radio input { display: none; }
