@@ -1,6 +1,6 @@
-# La Mediterránea Store
+# Cauce Commerce Lab · Full-stack commerce engineering (historical source: La Mediterránea Store)
 
-Reconstruction of the public merchandising storefront for **La Mediterránea — Orquesta-Escuela Infantil y Juvenil**.
+This repository originated as a reconstruction of a merchandising storefront for **La Mediterránea — Orquesta-Escuela Infantil y Juvenil**. That original commercial project was **not purchased or launched by the prospective customer**. It is now presented as a personal engineering case study, not a delivered customer success. Historical catalog, brand and product images remain here as provenance of that checkpoint, and are not used in the independent public showcase.\n\n**[Explore the public Cauce Commerce Lab](https://cauce-commerce-showcase-genova.vercel.app/)** — a separate fictional, client-free, browser-only engineering demo in [`showcase/`](showcase/README.md) covering canonical pricing, stock conflicts, idempotent orders, payment callbacks and simulated admin permissions.
 
 The storefront reads its operational catalog from Supabase and keeps the client experience unchanged. Mercado Pago remains intentionally disconnected until its real credentials are available.
 
@@ -40,6 +40,7 @@ Open `http://localhost:3000`.
 
 ```bash
 npm run check
+node --test showcase/model.test.mjs
 ```
 
 ## Runtime configuration
