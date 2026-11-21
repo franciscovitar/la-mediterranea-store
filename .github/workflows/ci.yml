@@ -32,5 +32,7 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm test
+      - name: Public commerce showcase model tests (synthetic)
+        run: node --test showcase/model.test.mjs
       - name: Production build
         run: npm run build
