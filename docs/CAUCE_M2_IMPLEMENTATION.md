@@ -1,6 +1,6 @@
 # Cauce M2 — merchant operations, isolated database boundary
 
-**Checkpoint (2026-11-21):** source built and unit/smoke tested; **isolated Supabase database CREATED / MIGRATED / SEEDED / PARTIALLY RLS-TESTED**. **Vercel environment NOT CONNECTED**, real staff Auth, browser QA and transactional tests NOT RUN. This does not certify a live admin, production sync, checkout, or payments.
+**Checkpoint (2026-11-21, updated after staging QA):** isolated Supabase database **CREATED / MIGRATED / SEEDED** and the Next.js public storefront **DEPLOYED to non-production staging**, reading Cauce data through Supabase RLS. Read-only API comparison, desktop/mobile browser walkthrough, unit tests and build have passed. **Real staff Auth, merchant writes/concurrency and transaction flows are NOT verified or enabled.** This is not a production rollout or payment certification.
 
 ## Product capabilities added in code
 
@@ -23,8 +23,16 @@
 
 1. **DONE:** independent Cauce project provisioned and both migrations applied with readback. The initial SQL and follow-up hardening remain versioned in source for review; CLI was not available, so Supabase migration API was used.
 2. Configure Auth email and allowlisted callback at https://YOUR-CAUCE-HOST/auth/cauce/confirm; create a dedicated staff test user, then bootstrap its **verified Auth UUID** into public.cauce_staff using the authorized project admin only. Never grant staff to an arbitrary email or allow registration to create operators automatically. **Not done.**
-3. Configure `NEXT_PUBLIC_CAUCE_SUPABASE_URL` and `NEXT_PUBLIC_CAUCE_SUPABASE_PUBLISHABLE_KEY` in **Cauce preview only**, then `CAUCE_CATALOG_SOURCE=database` and `CAUCE_MERCHANT_ENABLED=true`. The implementation needs no service-role key. **Blocked:** Vercel project `cauce-commerce-showcase` returned **403 forbidden** on listing env vars; no CLI is installed for the documented fallback. No environment value was changed, and production was untouched.
-4. Run **real staff** DB tests, retries/stale-version and concurrent stock writers; test actual public API readback, PKCE magic-link login, merchant CRUD, mobile/keyboard/browser behavior. Then deploy only an approved preview with readback, rollback and separate production authorization.
+3. **DONE for public catalog:** four Preview-only variables configured on the separate Vercel project `cauce-retail-preview`: `NEXT_PUBLIC_CAUCE_SUPABASE_URL`, `NEXT_PUBLIC_CAUCE_SUPABASE_PUBLISHABLE_KEY`, `CAUCE_CATALOG_SOURCE=database`, `CAUCE_MERCHANT_ENABLED=false`. No service-role key is used; Production env values remain unset. The old `cauce-commerce-showcase` remains the technical simulator and is not repurposed. **Still pending:** after an authorized staff test login, deliberately enable `CAUCE_MERCHANT_ENABLED=true` on non-production and redeploy.
+4. **DONE:** deployed the storefront from feature commit `f91f1ef5235db9f8f4f16b328aa441c822f0cee3` to [Vercel non-production staging](https://cauce-retail-preview-5pegfjov7-genova.vercel.app/catalogo); deployment `dpl_B4WoiuJymqe6dWAbZepzvevmasdm` was `READY`. Browser inspection passed for navigation, catalog, filters, search, wishlists, local cart and product detail. A mobile horizontal-overflow defect was fixed on the feature branch and verified at 375px document width (375px scroll width). Public API returned the same 12 active products, 4 featured and 154 units as a direct isolated Supabase query. `/gestion` remains 404; merchant GET returned 503 and unauthorized POST routes have no public write UI. The checkout page shows unavailable/coming soon.
+5. **PENDING:** authorize and configure test-user email callback, verify Auth UUID, bootstrap one staff membership, activate non-production merchant feature, then test real merchant CRUD, stale-version/conflict and concurrent stock writes. Production, payments and protected-branch merge require separate authorization.
+
+## Preview deployment and guardrails — observed
+
+- Dedicated Vercel project: `cauce-retail-preview` (`prj_vVT62K5wCcxENDLHymPH6Q9wPOpD`), framework Next.js 15, Node 22, no connected Git auto-deployment. Existing showcase project and historical storefront project were not reconfigured. `main` was not modified.
+- The first deployment requested without a target was unexpectedly classified by Vercel as Production on an empty project; it was **canceled immediately** (`dpl_326kp84rQxZsnPbgP437G4rtHEXb`, state `CANCELED`). Subsequent deployments used explicit `target=staging`; no successful Production deployment occurred.
+- Supabase security advisor still reports `authenticated_security_definer_function_executable` for `cauce_set_stock`; function definition inspected and it checks `auth.uid()` and `cauce_staff` membership before writing. This warning is documented, not suppressed. Performance advisor notes unused indexes on an almost empty DB and overlapping read policies; these remain for future query-plan review.
+- No real clients, payment credentials or service-role keys were configured; no historical Supabase or production data was written.
 
 ## Security contract / real QA still pending
 
@@ -33,9 +41,9 @@
 | Cauce points to historical Supabase URL | Reject identical URLs in config | Local unit test PASS |
 | Invalid product IDs, remote image, prices | Strict server payload validator + SQL checks | Local unit test PASS |
 | Forged cross-origin JSON mutation | Same-origin and JSON checks | Local unit test PASS |
-| Guest/nonstaff catalog or inventory write | Server claim+membership check + table RLS | Anonymous table privileges checked; nonstaff stock RPC denied via 42501; real HTTP/API guest CRUD tests pending |
+| Guest/nonstaff catalog or inventory write | Server claim+membership check + table RLS | Anonymous privileges checked; nonstaff stock RPC denied via 42501; Preview merchant GET 503 while disabled; real unauthorized POST tests pending |
 | Concurrent stock updates | Row lock, expected version, conflict, atomic ledger | Applied schema and source reviewed; concurrency DB test **NOT RUN** |
-| Browser public availability | Real catalog read under public RLS | Anonymous SQL role readback **PASS**; public HTTP + browser **NOT RUN** |
+| Browser public availability | Real catalog read under public RLS | **PASS:** HTTP 200 `/`, `/catalogo`, `/api/catalog`; DB/API aggregate and names match; Chrome desktop/mobile checks PASS, with overflow corrected |
 | Staff OTP, callback and session refresh | SSR cookie client + verified claims + staff table | Build PASS; actual email Auth **NOT RUN** |
 | Orders / checkout / money movement | Checkout remains blocked; order tab read-only | Historical endpoints blocked in local HTTP smoke |
 
@@ -45,4 +53,4 @@
 
 We reuse Next.js 15 + React 19 + pinned @supabase/ssr and supabase-js, keeping the original payment adapter disabled. Alternatives considered: rewrite with Shopify (commercially sensible for ordinary merchants but not a fit for a custom engineering evidence project), extend the historical La Mediterránea database (rejected: provenance/client-data isolation), and purely browser-local simulation (rejected: cannot demonstrate real authorization, RLS or transactional stock). Official Supabase [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [SSR Auth](https://supabase.com/docs/guides/auth/server-side) and [changelog](https://supabase.com/changelog.md) were checked 2026-11-21. The 2026-11-16 breaking change to merging Supabase branches requires production-branch write scope; no branch merges are performed here.
 
-**Implementation boundary:** M2 database infrastructure is active and partly verified, but the storefront is still using the static catalog until its isolated preview environment is configured. This PR is **not M2 fully operational**. Full integration requires real staff Auth, actual HTTP read/write tests, stock concurrency checks and browser QA.
+**Implementation boundary:** The isolated staging storefront now uses the real database-backed synthetic catalog. **M2 is partly operational, not complete**: there is no verified staff session or authorized merchant write, and no stock concurrency test. Payments and public production remain disabled. The staging URL uses the team's existing Vercel deployment protection; it is not yet a freely accessible recruiter-facing production domain.
