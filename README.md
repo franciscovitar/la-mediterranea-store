@@ -8,7 +8,9 @@ This repository originated as a reconstruction of a merchandising storefront for
 
 **[Explore the current public Cauce simulator](https://cauce-commerce-showcase-genova.vercel.app/)** — the currently deployed older browser-only technical demo in [`showcase/`](showcase/README.md) covering canonical pricing, stock conflicts, idempotent orders, payment callbacks and simulated admin permissions. The new Next.js retailer experience is implemented locally/in this branch and not yet published as the live store.
 
-The historical storefront read its operational catalog from Supabase. The new Cauce public routes deliberately use a separate synthetic static catalog until an isolated Cauce backend is designed, migrated and tested. Mercado Pago remains intentionally disconnected.
+> **M2 code checkpoint (isolated database not yet provisioned):** Cauce now has an isolated Supabase catalog adapter, staff-only merchant panel at /gestion, validated product and stock APIs, a stock ledger and optional dynamic stock-aware shop. The SQL schema and synthetic seed are **unapplied drafts**. The original customer data, checkout and payment integrations remain untouched. See [M2 implementation and setup gates](docs/CAUCE_M2_IMPLEMENTATION.md). The public shop still uses fictional fixture data until explicit isolated DB activation.
+
+The historical storefront read its operational catalog from Supabase. Cauce uses a separate synthetic static catalog by default, with a prepared switch to read from a different isolated database after its migration and security QA. Mercado Pago remains intentionally disconnected.
 
 ## Historical backend capabilities kept for reuse
 

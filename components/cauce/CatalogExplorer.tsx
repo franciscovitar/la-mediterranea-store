@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { cauceCategories, filterCauceProducts, type CatalogSort } from "@/lib/cauce/catalog";
+import { filterProducts, type CatalogSort, type CauceProduct } from "@/lib/cauce/catalog";
 import { ProductTile } from "./ProductTile";
 
 const sortLabels: Record<CatalogSort, string> = {
@@ -11,15 +11,17 @@ const sortLabels: Record<CatalogSort, string> = {
   nombre: "Nombre: A–Z",
 };
 
-export function CatalogExplorer({ initialCategory = "Todos", initialQuery = "", initialSort = "destacados" }: {
+export function CatalogExplorer({ products: source, initialCategory = "Todos", initialQuery = "", initialSort = "destacados" }: {
+  products: CauceProduct[];
   initialCategory?: string;
   initialQuery?: string;
   initialSort?: CatalogSort;
 }) {
+  const cauceCategories = useMemo(() => Array.from(new Set(source.map((product) => product.category))), [source]);
   const [category, setCategory] = useState(cauceCategories.includes(initialCategory) ? initialCategory : "Todos");
   const [query, setQuery] = useState(initialQuery);
   const [sort, setSort] = useState<CatalogSort>(initialSort);
-  const products = useMemo(() => filterCauceProducts({ query, category, sort }), [query, category, sort]);
+  const products = useMemo(() => filterProducts(source, { query, category, sort }), [source, query, category, sort]);
 
   useEffect(() => {
     const params = new URLSearchParams();

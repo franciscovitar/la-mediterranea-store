@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
-import { cauceProducts } from "@/lib/cauce/catalog";
+import { getCauceProducts } from "@/lib/cauce/backend";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (!raw) return [];
 
   try {
+    const cauceProducts = await getCauceProducts();
     const url = new URL(raw);
     const origin = url.toString().replace(/\/$/, "");
     return [{

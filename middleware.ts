@@ -1,10 +1,22 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
+import { cauceRefreshSession } from "@/lib/cauce/auth-middleware";
+import { cauceDatabaseEnabled, cauceMerchantEnabled } from "@/lib/cauce/config";
+import { cauceProducts } from "@/lib/cauce/catalog";
 
 export async function middleware(request: NextRequest) {
   // Public Cauce traffic must not reach the historical merchant operations.
   const path = request.nextUrl.pathname;
+  if ((path === "/gestion" || path.startsWith("/gestion/")) && !cauceMerchantEnabled()) {
+    return NextResponse.rewrite(new URL("/__cauce_not_found", request.url));
+  }
+  // Static catalog can reliably reject nonexistent slugs before App Router streaming.
+  // Database mode resolves dynamic slugs through the server query instead.
+  if (path.startsWith("/producto/") && !cauceDatabaseEnabled() &&
+    !cauceProducts.some((product) => product.active && path === `/producto/${product.slug}`)) {
+    return NextResponse.rewrite(new URL("/__cauce_not_found", request.url));
+  }
   const legacy = path.startsWith("/api/checkout/") || path.startsWith("/api/admin/") ||
     path.startsWith("/api/webhooks/mercadopago") || path.startsWith("/api/integrations/") ||
     path === "/admin" || path.startsWith("/admin/") || path.startsWith("/checkout/") ||
@@ -13,6 +25,10 @@ export async function middleware(request: NextRequest) {
   if (legacy && !privateLegacyDev) {
     if (path.startsWith("/api/")) return NextResponse.json({ error: "Operación no disponible." }, { status: 503 });
     return NextResponse.rewrite(new URL("/no-disponible", request.url));
+  }
+  if (path === "/gestion" || path.startsWith("/gestion/") ||
+      path.startsWith("/api/cauce/merchant") || path.startsWith("/auth/cauce/")) {
+    return cauceRefreshSession(request);
   }
   if (!legacy) return NextResponse.next();
   return updateSession(request);

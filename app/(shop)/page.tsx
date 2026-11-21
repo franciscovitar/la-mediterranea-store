@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ProductTile } from "@/components/cauce/ProductTile";
-import { featuredProducts } from "@/lib/cauce/catalog";
+import { getCauceProducts } from "@/lib/cauce/backend";
 
-export default function Home() {
+export default async function Home() {
+  const featuredProducts = (await getCauceProducts()).filter((product) => product.featured && product.active).slice(0,4);
   return <main>
     <section className="c-hero" aria-labelledby="c-hero-heading">
       <Image className="c-hero-photo" src="/cauce/hero.webp" alt="Mesa de madera con cerámica artesanal, textiles y vidrio al sol" fill priority sizes="100vw" />

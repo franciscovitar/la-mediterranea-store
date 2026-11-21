@@ -30,8 +30,8 @@ async function waitForServer() {
   throw new Error(`Timed out starting Next: ${output}`);
 }
 
-async function probe(path, expected, method = "GET") {
-  const response = await fetch(base + path, { method, signal: AbortSignal.timeout(8000) });
+async function probe(path, expected, method = "GET", options = {}) {
+  const response = await fetch(base + path, { method, signal: AbortSignal.timeout(8000), ...options });
   assert.equal(response.status, expected, `${method} ${path} returned ${response.status}`);
   console.log(`PASS ${response.status} ${method} ${path}`);
   return response;
@@ -53,6 +53,13 @@ try {
   await probe("/api/admin/orders", 503);
   await probe("/api/webhooks/mercadopago", 503, "POST");
   await probe("/admin", 200); // Rewritten to the non-transactional unavailable page.
+  await probe("/gestion", 404); // No isolated Cauce database configured.
+  await probe("/api/cauce/merchant", 503); // Merchant auth is fail-closed.
+  await probe("/api/cauce/merchant/products", 403, "POST"); // Missing Origin/JSON.
+  await probe("/api/cauce/merchant/products", 503, "POST", {
+    headers: { origin: base, "content-type": "application/json" },
+    body: JSON.stringify({}),
+  });
 
   if (screenshotDir) {
     mkdirSync(screenshotDir, { recursive: true });

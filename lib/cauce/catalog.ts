@@ -6,8 +6,9 @@ export type CauceProduct = Product & {
   material: string;
   dimensions: string;
   care: string;
-  badge?: string;
+  badge?: string | null;
   featured?: boolean;
+  stock?: number;
 };
 
 export type CatalogSort = "destacados" | "precio-asc" | "precio-desc" | "nombre";
@@ -21,8 +22,12 @@ export function findCauceProduct(slug: string) {
 }
 
 export function filterCauceProducts(options: { query?: string; category?: string; sort?: CatalogSort }) {
+  return filterProducts(cauceProducts, options);
+}
+
+export function filterProducts(source: CauceProduct[], options: { query?: string; category?: string; sort?: CatalogSort }) {
   const normalizedQuery = (options.query ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-  const products = cauceProducts.filter((product) => {
+  const products = source.filter((product) => {
     if (!product.active) return false;
     if (options.category && options.category !== "Todos" && product.category !== options.category) return false;
     const searchable = `${product.name} ${product.description} ${product.category} ${product.material}`

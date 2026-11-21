@@ -1,6 +1,6 @@
 import { noStoreJson } from "@/lib/http/request";
-import { cauceProducts } from "@/lib/cauce/catalog";
+import { getCauceProducts } from "@/lib/cauce/backend";
 
 export async function GET() {
-  return noStoreJson({ products: cauceProducts.filter((product) => product.active) });
+  return noStoreJson({ products: await getCauceProducts() });
 }

@@ -4,25 +4,24 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductPurchase } from "@/components/cauce/ProductPurchase";
 import { ProductTile } from "@/components/cauce/ProductTile";
-import { cauceProducts, findCauceProduct } from "@/lib/cauce/catalog";
+import { getCauceProducts } from "@/lib/cauce/backend";
 import { formatMoney } from "@/lib/products";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const dynamicParams = false;
-
-export function generateStaticParams() { return cauceProducts.map((product) => ({ slug: product.slug })); }
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = findCauceProduct(slug);
-  if (!product) return { title: "Producto no encontrado | Cauce" };
+  const product = (await getCauceProducts()).find((item) => item.slug === slug);
+  if (!product) notFound();
   return { title: `${product.name} | Cauce`, description: product.description, openGraph: { images: [product.image] } };
 }
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = findCauceProduct(slug);
+  const cauceProducts = await getCauceProducts();
+  const product = cauceProducts.find((item) => item.slug === slug);
   if (!product) notFound();
   const related = cauceProducts.filter((item) => item.id !== product.id && item.category === product.category).slice(0, 4);
   const fallbackRelated = related.length >= 2 ? related : cauceProducts.filter((item) => item.id !== product.id).slice(0, 4);
