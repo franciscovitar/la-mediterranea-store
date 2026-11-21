@@ -1,13 +1,6 @@
 import { noStoreJson } from "@/lib/http/request";
-import { getPublicCatalog } from "@/lib/integrations/supabase/public";
-
-export const dynamic = "force-dynamic";
+import { cauceProducts } from "@/lib/cauce/catalog";
 
 export async function GET() {
-  try {
-    return noStoreJson({ products: await getPublicCatalog() });
-  } catch (error) {
-    console.error("Supabase catalog read failed", error);
-    return noStoreJson({ error: "No se pudo leer el catálogo." }, { status: 503 });
-  }
+  return noStoreJson({ products: cauceProducts.filter((product) => product.active) });
 }

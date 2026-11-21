@@ -1,25 +1,26 @@
 # Cauce Commerce Lab · Full-stack commerce engineering (historical source: La Mediterránea Store)
 
-> **Product direction (21 Nov 2026):** Cauce is becoming a full, company-usable fictional online store built on this actual Next.js/Supabase codebase. The browser-only `showcase/` is a historical technical simulator, **not** the target product interface. Read the [product contract](docs/PRODUCT_DIRECTION_V2.md), [proposed architecture and reuse matrix](docs/ARCHITECTURE_V2.md), and [ecommerce capability research](docs/FEATURE_RESEARCH_20261121.md). These describe a planned evolution, not deployed features.
+> **Product direction (21 Nov 2026):** Cauce is becoming a complete, company-usable fictional online store built on this actual Next.js/Supabase codebase. The browser-only `showcase/` is a historical technical simulator, **not** the target product interface. Read the [product contract](docs/PRODUCT_DIRECTION_V2.md), [proposed architecture and reuse matrix](docs/ARCHITECTURE_V2.md), and [ecommerce capability research](docs/FEATURE_RESEARCH_20261121.md).
+
+> **Implementation checkpoint — M1 retail foundation (not yet deployed):** The primary Next.js routes now contain Cauce's independent brand, 12 fictitious homeware products, generated/optimized product photos, homepage, collections, search, category filter, sorting, product details, persistent wishlists and cart. **This is a real browsable storefront frontend backed by a static synthetic catalog, not yet an end-to-end transactional merchant application.** The original Supabase/checkout/admin domain code is retained for reuse, but all legacy admin, checkout and payment endpoints are blocked by default at middleware level. No order can be paid or placed in this checkpoint. See `docs/CAUCE_M1_IMPLEMENTATION.md` for the tested boundary and next steps.
 
 This repository originated as a reconstruction of a merchandising storefront for **La Mediterránea — Orquesta-Escuela Infantil y Juvenil**. That original commercial project was **not purchased or launched by the prospective customer**. It is now presented as a personal engineering case study, not a delivered customer success. Historical catalog, brand and product images remain here as provenance of that checkpoint, and are not used in the independent public showcase.
 
-**[Explore the current public Cauce simulator](https://cauce-commerce-showcase-genova.vercel.app/)** — a separate fictional, client-free, browser-only technical demo in [`showcase/`](showcase/README.md) covering canonical pricing, stock conflicts, idempotent orders, payment callbacks and simulated admin permissions. The future primary URL will serve the operational store only after the actual end-to-end application is implemented and verified.
+**[Explore the current public Cauce simulator](https://cauce-commerce-showcase-genova.vercel.app/)** — the currently deployed older browser-only technical demo in [`showcase/`](showcase/README.md) covering canonical pricing, stock conflicts, idempotent orders, payment callbacks and simulated admin permissions. The new Next.js retailer experience is implemented locally/in this branch and not yet published as the live store.
 
-The storefront reads its operational catalog from Supabase and keeps the client experience unchanged. Mercado Pago remains intentionally disconnected until its real credentials are available.
+The historical storefront read its operational catalog from Supabase. The new Cauce public routes deliberately use a separate synthetic static catalog until an isolated Cauce backend is designed, migrated and tested. Mercado Pago remains intentionally disconnected.
 
-## Current checkpoint
+## Historical backend capabilities kept for reuse
 
 - Next.js + TypeScript storefront.
-- Current public catalog and prices migrated from the existing site.
-- Real product images and brand identity.
-- Responsive catalog with category filters.
+- Historical La Mediterránea catalog, RLS and admin preserved for provenance (not the Cauce public catalog).
+- Responsive catalog and reusable basket/variant logic.
 - Product color/size variants where defined by the current catalog.
 - Persistent client-side cart with quantity controls.
 - Server-authoritative checkout quote endpoint.
 - Checkout UI and payment result pages.
 - Supabase schema + seed applied for products, variants, stock, orders and admin authorization.
-- Public storefront catalog, server-side checkout quote and authenticated admin persistence use Supabase.
+- Historical storefront read and server checkout quote, admin persistence use Supabase when explicitly enabled in private development.
 - Supabase Storage serves product images with administrator-only writes.
 - Magic Link authentication protects `/admin`; database RLS enforces the administrator role.
 - Mercado Pago Checkout Pro Orders API adapter prepared behind environment variables.
@@ -30,6 +31,8 @@ The storefront reads its operational catalog from Supabase and keeps the client 
 - Idempotency fingerprinting so a changed cart/email cannot accidentally reuse an older payment order.
 - Basic security headers plus safe 404/error states.
 - CI checks for catalog integrity, TypeScript and production build.
+
+**Current safety:** `CAUCE_LEGACY_DEV_ACCESS=true` can opt in to historical admin/checkout routes **only in development** for authorized characterization tests. It has no effect in production; those operations remain blocked. Do not point Cauce's public frontend to legacy order/payment tables. New transaction/migration work is milestones M2–M4.
 
 ## Run locally
 
@@ -46,6 +49,8 @@ Open `http://localhost:3000`.
 npm run check
 node --test showcase/model.test.mjs
 ```
+
+If `tsx --test` cannot create IPC sockets in a restricted Linux runner, `node --import tsx --test tests/*.test.ts` exercises the same project test modules without that CLI socket.
 
 ## Runtime configuration
 

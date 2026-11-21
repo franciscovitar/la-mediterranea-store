@@ -1,0 +1,73 @@
+// Optional local black-box QA, outside metered deployment/CI infrastructure.
+// Run after `npm run build`: node scripts/cauce-smoke.mjs
+import assert from "node:assert/strict";
+import { spawn, spawnSync } from "node:child_process";
+import { mkdirSync } from "node:fs";
+import { resolve } from "node:path";
+
+const port = 31571;
+const base = `http://127.0.0.1:${port}`;
+const screenshotDir = process.env.CAUCE_QA_DIR;
+
+// Some restricted CI-like workspaces disable OS network-interface enumeration.
+// This changes Next's local logging only, not any application networking behavior.
+const startCode = `require("node:os").networkInterfaces = () => ({lo:[{address:"127.0.0.1",family:"IPv4",internal:true}]});process.argv=["node","next","start","-p","${port}","-H","127.0.0.1"];require("next/dist/bin/next")`;
+const server = spawn(process.execPath, ["-e", startCode], { cwd: process.cwd(), stdio: ["ignore", "pipe", "pipe"] });
+let output = "";
+server.stdout.on("data", (chunk) => { output += chunk.toString(); });
+server.stderr.on("data", (chunk) => { output += chunk.toString(); });
+
+async function waitForServer() {
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    if (server.exitCode !== null) throw new Error(`Next exited early: ${output}`);
+    try {
+      const response = await fetch(base, { signal: AbortSignal.timeout(2000) });
+      if (response.ok) return;
+    } catch { /* Starting */ }
+    await new Promise((done) => setTimeout(done, 350));
+  }
+  throw new Error(`Timed out starting Next: ${output}`);
+}
+
+async function probe(path, expected, method = "GET") {
+  const response = await fetch(base + path, { method, signal: AbortSignal.timeout(8000) });
+  assert.equal(response.status, expected, `${method} ${path} returned ${response.status}`);
+  console.log(`PASS ${response.status} ${method} ${path}`);
+  return response;
+}
+
+try {
+  await waitForServer();
+  const home = await (await probe("/", 200)).text();
+  assert.match(home, /Hacé espacio/);
+  assert.doesNotMatch(home, /La Mediterránea|Orquesta-Escuela/);
+  await probe("/catalogo", 200);
+  await probe("/catalogo?categoria=Mesa&q=taza", 200);
+  await probe("/producto/taza-bruma", 200);
+  await probe("/favoritos", 200);
+  await probe("/producto/no-existe", 404);
+  const json = await (await probe("/api/catalog", 200)).json();
+  assert.equal(json.products.length, 12);
+  await probe("/api/checkout/create", 503, "POST");
+  await probe("/api/admin/orders", 503);
+  await probe("/api/webhooks/mercadopago", 503, "POST");
+  await probe("/admin", 200); // Rewritten to the non-transactional unavailable page.
+
+  if (screenshotDir) {
+    mkdirSync(screenshotDir, { recursive: true });
+    for (const shot of [
+      { name: "home-desktop", path: "/", size: "1440,1000" },
+      { name: "catalog-desktop", path: "/catalogo", size: "1440,1000" },
+      { name: "product-desktop", path: "/producto/taza-bruma", size: "1440,1000" },
+      { name: "home-mobile", path: "/", size: "390,844" },
+    ]) {
+      const file = resolve(screenshotDir, `${shot.name}.png`);
+      const result = spawnSync("/usr/bin/chromium", ["--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--hide-scrollbars", `--window-size=${shot.size}`, "--virtual-time-budget=1200", `--screenshot=${file}`, base + shot.path], { encoding: "utf8", timeout: 20000 });
+      assert.equal(result.status, 0, `Chromium failed: ${result.stderr?.slice(-900)}`);
+      console.log(`SCREENSHOT ${file}`);
+    }
+  }
+} finally {
+  server.kill("SIGTERM");
+}
