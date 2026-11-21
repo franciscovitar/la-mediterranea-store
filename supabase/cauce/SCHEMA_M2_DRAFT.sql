@@ -1,6 +1,8 @@
 -- CAUCE-ONLY Supabase project. DO NOT run in the original La Mediterránea DB.
--- Pending isolated project creation + reviewed migration via Supabase CLI.
--- This is a versioned draft, not an applied migration.
+-- Source snapshot applied on 2026-11-21 as migration
+-- 20261121132236 cauce_m2_isolated_merchant_schema in erswrerhpmvviedudzit.
+-- Apply HARDEN_M2_20261121.sql afterward: its explicit role REVOKEs are vital.
+-- The filename retains DRAFT to preserve references to the original review.
 begin;
 
 create table public.cauce_staff (
