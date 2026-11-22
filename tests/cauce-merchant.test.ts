@@ -78,4 +78,6 @@ test("SQL draft has scoped RLS, version guard and no guest order permissions", (
   assert.match(sql, /before_row\.version <> p_expected_version/);
   assert.match(sql, /revoke all on function public\.cauce_set_stock/);
   assert.doesNotMatch(sql, /grant insert on public\.cauce_orders to anon/);
+  assert.match(sql, /grant select on public\.cauce_inventory_movements to authenticated;/);
+  assert.doesNotMatch(sql, /grant select on public\.cauce_inventory_movements to anon/);
 });
