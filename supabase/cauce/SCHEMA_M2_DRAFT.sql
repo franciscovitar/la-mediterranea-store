@@ -143,6 +143,9 @@ grant insert, update on public.cauce_products to authenticated;
 -- Only the tightly scoped SECURITY DEFINER RPC may change stock or its ledger.
 -- Its first operation validates staff membership, independently of JWT metadata.
 grant select on public.cauce_staff, public.cauce_orders to authenticated;
+-- The merchant console needs read-only ledger access. RLS limits rows to staff;
+-- anon remains without any privilege on movement history.
+grant select on public.cauce_inventory_movements to authenticated;
 
 create policy cauce_staff_self on public.cauce_staff for select to authenticated
 using (user_id = (select auth.uid()));
