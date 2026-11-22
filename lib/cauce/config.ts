@@ -10,7 +10,8 @@ export function cauceMerchantEnabled() {
 export function cauceSandboxCheckoutEnabled() {
   return cauceDatabaseEnabled() && process.env.CAUCE_CHECKOUT_ENABLED === "true" &&
     !!process.env.CAUCE_SUPABASE_SECRET_KEY &&
-    !!process.env.CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN?.startsWith("TEST-") &&
+    /^APP_USR-[A-Za-z0-9_-]{12,}$/.test(process.env.CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN ?? "") &&
+    /^\d{5,20}$/.test(process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID ?? "") &&
     !!process.env.CAUCE_MERCADOPAGO_WEBHOOK_SECRET &&
     cauceCheckoutOrigin() !== null;
 }

@@ -32,7 +32,7 @@ export function CauceOrderResult() {
 
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => {
-    if (state?.status === "paid_test" || state?.status === "failed_test" || state?.status === "cancelled") {
+    if (state?.status === "paid_test" || state?.status === "failed_test" || state?.status === "cancelled" || state?.status === "expired_test") {
       sessionStorage.removeItem("cauce-checkout-request-v1");
     }
     if (state?.status === "paid_test") clear();
@@ -40,6 +40,7 @@ export function CauceOrderResult() {
 
   const messages: Record<string, { title: string; description: string }> = {
     paid_test: { title: "Pago de prueba confirmado", description: "Mercado Pago validó este pago de prueba y el servidor actualizó el inventario." },
+    expired_test: { title: "El intento de pago venció", description: "La reserva terminó y el stock vuelve a quedar disponible para otros pedidos. No hubo un pago confirmado." },
     pending: { title: "Estamos verificando el pago", description: "Volvé a consultar en unos instantes. La pantalla de retorno no confirma el pago por sí sola." },
     failed_test: { title: "El pago de prueba no fue aprobado", description: "Podés volver a la colección. No se confirmó ninguna compra." },
     needs_review: { title: "El pedido necesita revisión", description: "La confirmación requiere intervención del equipo. No se puede dar por pagado desde esta pantalla." },

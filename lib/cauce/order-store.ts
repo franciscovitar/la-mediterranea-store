@@ -7,6 +7,10 @@ export type StoredOrder = {
   currency: string; preference_id: string | null; expires_at: string;
 };
 
+export function visibleCauceOrderStatus(order: Pick<StoredOrder, "status" | "expires_at">, nowMs = Date.now()) {
+  return order.status === "pending" && Date.parse(order.expires_at) <= nowMs ? "expired_test" : order.status;
+}
+
 export function cauceOrderClient() {
   if (!cauceSandboxCheckoutEnabled()) throw new CauceCheckoutError("Los pagos de prueba todavía no están habilitados.", 503);
   const { url } = caucePublicConfig();

@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { CauceCheckoutError } from "@/lib/cauce/checkout";
 
 const apiOrigin = "https://api.mercadopago.com";
+const identityUrl = "https://api.mercadolibre.com/users/me";
 
 export function verifyCauceWebhookSignature({ signature, requestId, dataId, secret, nowMs = Date.now() }: {
   signature: string | null; requestId: string | null; dataId: string; secret: string; nowMs?: number;
@@ -18,16 +19,51 @@ export function verifyCauceWebhookSignature({ signature, requestId, dataId, secr
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
-function testToken() {
+function configuredTestToken() {
   const token = process.env.CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN;
-  if (!token?.startsWith("TEST-")) throw new CauceCheckoutError("El pago de prueba no está configurado.", 503);
+  if (!/^APP_USR-[A-Za-z0-9_-]{12,}$/.test(token ?? "")) {
+    throw new CauceCheckoutError("El pago de prueba no está configurado.", 503);
+  }
+  return token;
+}
+
+/** A prefix is not evidence of sandbox status. The provider must attest a test seller. */
+export function isVerifiedCauceTestSeller(identity: unknown, expectedId: string) {
+  if (!identity || typeof identity !== "object" || Array.isArray(identity)) return false;
+  const user = identity as Record<string, unknown>;
+  return /^\d{5,20}$/.test(expectedId) && String(user.id) === expectedId &&
+    Array.isArray(user.tags) && user.tags.includes("test_user") &&
+    (user.site_id === undefined || user.site_id === "MLA");
+}
+
+async function verifiedTestToken() {
+  const token = configuredTestToken();
+  const sellerId = process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID ?? "";
+  if (!/^\d{5,20}$/.test(sellerId)) {
+    throw new CauceCheckoutError("Falta verificar el vendedor de prueba.", 503);
+  }
+  let identity: unknown;
+  try {
+    const response = await fetch(identityUrl, {
+      headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw Error("identity-unavailable");
+    identity = await response.json();
+  } catch {
+    throw new CauceCheckoutError("No se pudo verificar la cuenta de prueba de Mercado Pago.", 503);
+  }
+  if (!isVerifiedCauceTestSeller(identity, sellerId)) {
+    throw new CauceCheckoutError("La credencial no corresponde al vendedor de prueba autorizado.", 503);
+  }
   return token;
 }
 
 async function mpRequest(path: string, init: RequestInit = {}) {
+  const token = await verifiedTestToken();
   const response = await fetch(`${apiOrigin}${path}`, {
     ...init,
-    headers: { Authorization: `Bearer ${testToken()}`, "Content-Type": "application/json", ...init.headers },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...init.headers },
     cache: "no-store",
     signal: AbortSignal.timeout(10000),
   });
@@ -35,12 +71,13 @@ async function mpRequest(path: string, init: RequestInit = {}) {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
-export function safeSandboxUrl(value: unknown) {
+export function safeSandboxUrl(value: unknown, expectedPreferenceId?: string) {
   if (typeof value !== "string") throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502);
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.hostname !== "sandbox.mercadopago.com" ||
-        !url.pathname.startsWith("/mla/checkout/") || url.username || url.password) throw Error();
+        !url.pathname.startsWith("/mla/checkout/") || url.username || url.password ||
+        url.port || url.hash || (expectedPreferenceId && url.searchParams.get("pref_id") !== expectedPreferenceId)) throw Error();
     return url.toString();
   } catch { throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502); }
 }
@@ -64,13 +101,19 @@ export async function createCaucePreference(input: {
     }),
   });
   if (typeof result.id !== "string" || result.id.length < 5) throw new CauceCheckoutError("Preferencia inválida.", 502);
-  return { id: result.id, url: safeSandboxUrl(result.sandbox_init_point) };
+  if (String(result.collector_id) !== process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID) {
+    throw new CauceCheckoutError("La preferencia no pertenece al vendedor de prueba.", 502);
+  }
+  return { id: result.id, url: safeSandboxUrl(result.sandbox_init_point, result.id) };
 }
 
 export async function getCaucePreference(id: string) {
   if (!/^[a-zA-Z0-9-]{5,160}$/.test(id)) throw new CauceCheckoutError("Preferencia inválida.", 400);
   const result = await mpRequest(`/checkout/preferences/${encodeURIComponent(id)}`);
-  return safeSandboxUrl(result.sandbox_init_point);
+  if (result.id !== id || String(result.collector_id) !== process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID) {
+    throw new CauceCheckoutError("La preferencia no pertenece al vendedor de prueba.", 502);
+  }
+  return safeSandboxUrl(result.sandbox_init_point, id);
 }
 
 export async function getCaucePayment(id: string) {
