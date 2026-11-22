@@ -4,6 +4,7 @@ import { updateSession } from "@/lib/supabase/proxy";
 import { cauceRefreshSession } from "@/lib/cauce/auth-middleware";
 import { cauceDatabaseEnabled, cauceMerchantEnabled } from "@/lib/cauce/config";
 import { cauceProducts } from "@/lib/cauce/catalog";
+import { isLegacyUnavailablePath } from "@/lib/cauce/route-policy";
 
 export async function middleware(request: NextRequest) {
   // Public Cauce traffic must not reach the historical merchant operations.
@@ -17,10 +18,7 @@ export async function middleware(request: NextRequest) {
     !cauceProducts.some((product) => product.active && path === `/producto/${product.slug}`)) {
     return NextResponse.rewrite(new URL("/__cauce_not_found", request.url));
   }
-  const legacy = path.startsWith("/api/checkout/") || path.startsWith("/api/admin/") ||
-    path.startsWith("/api/webhooks/mercadopago") || path.startsWith("/api/integrations/") ||
-    path === "/admin" || path.startsWith("/admin/") || path.startsWith("/checkout/") ||
-    path.startsWith("/auth/");
+  const legacy = isLegacyUnavailablePath(path);
   const privateLegacyDev = process.env.NODE_ENV === "development" && process.env.CAUCE_LEGACY_DEV_ACCESS === "true";
   if (legacy && !privateLegacyDev) {
     if (path.startsWith("/api/")) return NextResponse.json({ error: "Operación no disponible." }, { status: 503 });
