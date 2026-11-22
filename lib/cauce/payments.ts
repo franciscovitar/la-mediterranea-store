@@ -94,7 +94,26 @@ export function safeTestCheckoutUrl(value: unknown, expectedPreferenceId?: strin
         url.port || url.hash || url.searchParams.getAll("pref_id").length !== 1 ||
         (expectedPreferenceId && url.searchParams.get("pref_id") !== expectedPreferenceId)) throw Error();
     return url.toString();
-  } catch { throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502); }
+  } catch {
+    // Preview-only diagnostic: reveal URL shape, never a preference ID, query value or token.
+    if (process.env.VERCEL_ENV === "preview") {
+      let shape: Record<string, unknown> = { kind: typeof value };
+      if (typeof value === "string") {
+        try {
+          const url = new URL(value);
+          shape = {
+            host: url.hostname,
+            path: url.pathname,
+            scheme: url.protocol,
+            queryKeys: [...url.searchParams.keys()].sort(),
+            preferenceMatches: expectedPreferenceId ? url.searchParams.get("pref_id") === expectedPreferenceId : null,
+          };
+        } catch { shape = { kind: "unparseable-string" }; }
+      }
+      console.warn("CAUCE_TEST_CHECKOUT_URL_REJECTED", shape);
+    }
+    throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502);
+  }
 }
 
 export async function createCaucePreference(input: {
