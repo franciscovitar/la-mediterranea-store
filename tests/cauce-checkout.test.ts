@@ -51,14 +51,19 @@ test("webhook HMAC verifies a fresh signature and rejects tampering/replay", () 
   assert.equal(verifyCauceWebhookSignature({ ...args, signature: "broken" }), false);
 });
 
-test("only the documented Checkout Pro URL for the verified test preference is accepted", () => {
+test("only verified Checkout Pro URLs for the exact test preference are accepted", () => {
   const url = "https://www.mercadopago.com/mla/checkout/start?pref_id=12345";
+  const regionalUrl = "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=12345";
   assert.equal(safeTestCheckoutUrl(url, "12345"), url);
+  assert.equal(safeTestCheckoutUrl(regionalUrl, "12345"), regionalUrl);
   for (const bad of ["https://www.mercadopago.com.evil.tld/mla/checkout/start?pref_id=12345", "javascript:alert(1)",
     "https://mercadopago.com/mla/checkout/start?pref_id=12345", "http://www.mercadopago.com/mla/checkout/start?pref_id=12345",
     "https://sandbox.mercadopago.com/mla/checkout/pay?pref_id=12345",
     "https://www.mercadopago.com/mla/checkout/start?pref_id=another-pref",
     "https://www.mercadopago.com/mla/checkout/start?pref_id=12345&pref_id=12345",
+    "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=another-pref",
+    "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=12345&redirect=https://evil.tld",
+    "https://www.mercadopago.com.ar.evil.tld/checkout/v1/redirect?pref_id=12345",
     "https://www.mercadopago.com/mla/checkout/start?pref_id=12345#fragment"]) {
     assert.throws(() => safeTestCheckoutUrl(bad, "12345"));
   }
@@ -151,7 +156,7 @@ test("verified test seller permits Checkout Pro URLs only for its own preference
         assert.equal(preference.back_urls.success.includes("x-vercel-protection-bypass"), false);
       }
       return Response.json({ id, collector_id: 1234567890,
-        init_point: `https://www.mercadopago.com/mla/checkout/start?pref_id=${id}` });
+        init_point: `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${id}` });
     };
     const result = await createCaucePreference({
       orderId: "123e4567-e89b-42d3-a456-426614174000", requestKey: "123e4567-e89b-42d3-a456-426614174001",
@@ -159,7 +164,7 @@ test("verified test seller permits Checkout Pro URLs only for its own preference
       items: [{ productId: product.id, name: product.name, quantity: 1, unitPrice: product.price }],
     });
     assert.equal(result.id, id);
-    assert.equal(result.url, `https://www.mercadopago.com/mla/checkout/start?pref_id=${id}`);
+    assert.equal(result.url, `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${id}`);
     assert.equal(await getCaucePreference(id), result.url);
     assert.deepEqual(calls, [
       "https://api.mercadolibre.com/users/me", "https://api.mercadopago.com/checkout/preferences",
