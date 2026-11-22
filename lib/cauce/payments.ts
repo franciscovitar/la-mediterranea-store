@@ -84,36 +84,18 @@ async function mpRequest(path: string, init: RequestInit = {}) {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
-/** Checkout Pro's test seller uses the normal init_point, not the retired sandbox endpoint. */
+/** Test sellers use init_point; Mercado Pago currently returns either of these exact Checkout Pro routes. */
 export function safeTestCheckoutUrl(value: unknown, expectedPreferenceId?: string) {
   if (typeof value !== "string") throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502);
   try {
     const url = new URL(value);
-    if (url.protocol !== "https:" || url.hostname !== "www.mercadopago.com" ||
-        url.pathname !== "/mla/checkout/start" || url.username || url.password ||
-        url.port || url.hash || url.searchParams.getAll("pref_id").length !== 1 ||
+    const allowedRoute = (url.hostname === "www.mercadopago.com" && url.pathname === "/mla/checkout/start") ||
+      (url.hostname === "www.mercadopago.com.ar" && url.pathname === "/checkout/v1/redirect");
+    if (url.protocol !== "https:" || !allowedRoute || url.username || url.password ||
+        url.port || url.hash || url.searchParams.size !== 1 || url.searchParams.getAll("pref_id").length !== 1 ||
         (expectedPreferenceId && url.searchParams.get("pref_id") !== expectedPreferenceId)) throw Error();
     return url.toString();
-  } catch {
-    // Preview-only diagnostic: reveal URL shape, never a preference ID, query value or token.
-    if (process.env.VERCEL_ENV === "preview") {
-      let shape: Record<string, unknown> = { kind: typeof value };
-      if (typeof value === "string") {
-        try {
-          const url = new URL(value);
-          shape = {
-            host: url.hostname,
-            path: url.pathname,
-            scheme: url.protocol,
-            queryKeys: [...url.searchParams.keys()].sort(),
-            preferenceMatches: expectedPreferenceId ? url.searchParams.get("pref_id") === expectedPreferenceId : null,
-          };
-        } catch { shape = { kind: "unparseable-string" }; }
-      }
-      console.warn("CAUCE_TEST_CHECKOUT_URL_REJECTED", shape);
-    }
-    throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502);
-  }
+  } catch { throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502); }
 }
 
 export async function createCaucePreference(input: {
