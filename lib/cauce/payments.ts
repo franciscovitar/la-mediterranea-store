@@ -4,6 +4,19 @@ import { CauceCheckoutError } from "@/lib/cauce/checkout";
 const apiOrigin = "https://api.mercadopago.com";
 const identityUrl = "https://api.mercadolibre.com/users/me";
 
+/** The isolated Preview is SSO-protected; Mercado Pago webhooks cannot send custom headers. */
+export function cauceProtectedWebhookUrl(origin: string, bypass: string | undefined) {
+  if (!/^[A-Za-z0-9_-]{20,200}$/.test(bypass ?? "")) {
+    throw new CauceCheckoutError("Notificaciones de prueba no disponibles en este Preview.", 503);
+  }
+  const url = new URL("/api/cauce/checkout/webhook", origin);
+  if (url.protocol !== "https:" || !url.hostname.endsWith(".vercel.app") || url.username || url.password || url.port) {
+    throw new CauceCheckoutError("URL de notificación inválida.", 503);
+  }
+  url.searchParams.set("x-vercel-protection-bypass", bypass!);
+  return url.toString();
+}
+
 export function verifyCauceWebhookSignature({ signature, requestId, dataId, secret, nowMs = Date.now() }: {
   signature: string | null; requestId: string | null; dataId: string; secret: string; nowMs?: number;
 }) {
@@ -71,13 +84,15 @@ async function mpRequest(path: string, init: RequestInit = {}) {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
-export function safeSandboxUrl(value: unknown, expectedPreferenceId?: string) {
+/** Checkout Pro's test seller uses the normal init_point, not the retired sandbox endpoint. */
+export function safeTestCheckoutUrl(value: unknown, expectedPreferenceId?: string) {
   if (typeof value !== "string") throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502);
   try {
     const url = new URL(value);
-    if (url.protocol !== "https:" || url.hostname !== "sandbox.mercadopago.com" ||
-        !url.pathname.startsWith("/mla/checkout/") || url.username || url.password ||
-        url.port || url.hash || (expectedPreferenceId && url.searchParams.get("pref_id") !== expectedPreferenceId)) throw Error();
+    if (url.protocol !== "https:" || url.hostname !== "www.mercadopago.com" ||
+        url.pathname !== "/mla/checkout/start" || url.username || url.password ||
+        url.port || url.hash || url.searchParams.getAll("pref_id").length !== 1 ||
+        (expectedPreferenceId && url.searchParams.get("pref_id") !== expectedPreferenceId)) throw Error();
     return url.toString();
   } catch { throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502); }
 }
@@ -92,7 +107,7 @@ export async function createCaucePreference(input: {
     body: JSON.stringify({
       items: input.items.map((p) => ({ id: p.productId, title: p.name, quantity: p.quantity, currency_id: "ARS", unit_price: p.unitPrice })),
       external_reference: input.orderId,
-      notification_url: `${input.origin}/api/cauce/checkout/webhook`,
+      notification_url: cauceProtectedWebhookUrl(input.origin, process.env.VERCEL_AUTOMATION_BYPASS_SECRET),
       back_urls: { success: `${returnUrl}&return=success`, pending: `${returnUrl}&return=pending`, failure: `${returnUrl}&return=failure` },
       auto_return: "approved",
       expires: true,
@@ -104,7 +119,7 @@ export async function createCaucePreference(input: {
   if (String(result.collector_id) !== process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID) {
     throw new CauceCheckoutError("La preferencia no pertenece al vendedor de prueba.", 502);
   }
-  return { id: result.id, url: safeSandboxUrl(result.sandbox_init_point, result.id) };
+  return { id: result.id, url: safeTestCheckoutUrl(result.init_point, result.id) };
 }
 
 export async function getCaucePreference(id: string) {
@@ -113,7 +128,7 @@ export async function getCaucePreference(id: string) {
   if (result.id !== id || String(result.collector_id) !== process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID) {
     throw new CauceCheckoutError("La preferencia no pertenece al vendedor de prueba.", 502);
   }
-  return safeSandboxUrl(result.sandbox_init_point, id);
+  return safeTestCheckoutUrl(result.init_point, id);
 }
 
 export async function getCaucePayment(id: string) {

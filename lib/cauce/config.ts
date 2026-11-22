@@ -13,6 +13,7 @@ export function cauceSandboxCheckoutEnabled() {
     /^APP_USR-[A-Za-z0-9_-]{12,}$/.test(process.env.CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN ?? "") &&
     /^\d{5,20}$/.test(process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID ?? "") &&
     !!process.env.CAUCE_MERCADOPAGO_WEBHOOK_SECRET &&
+    /^[A-Za-z0-9_-]{20,200}$/.test(process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? "") &&
     cauceCheckoutOrigin() !== null;
 }
 

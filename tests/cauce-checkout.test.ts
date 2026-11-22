@@ -3,7 +3,7 @@ import test from "node:test";
 import { createHmac } from "node:crypto";
 import { cauceProducts } from "../lib/cauce/catalog";
 import { parseCheckoutLines, quoteCheckout, validCheckoutUuid } from "../lib/cauce/checkout";
-import { createCaucePreference, getCaucePreference, isVerifiedCauceTestSeller, safeSandboxUrl, validateCauceProviderPayment, verifyCauceWebhookSignature } from "../lib/cauce/payments";
+import { cauceProtectedWebhookUrl, createCaucePreference, getCaucePreference, isVerifiedCauceTestSeller, safeTestCheckoutUrl, validateCauceProviderPayment, verifyCauceWebhookSignature } from "../lib/cauce/payments";
 import { sameStoredLines, visibleCauceOrderStatus } from "../lib/cauce/order-store";
 import { cauceSandboxCheckoutEnabled } from "../lib/cauce/config";
 
@@ -51,15 +51,26 @@ test("webhook HMAC verifies a fresh signature and rejects tampering/replay", () 
   assert.equal(verifyCauceWebhookSignature({ ...args, signature: "broken" }), false);
 });
 
-test("only the exact Mercado Pago sandbox host is accepted", () => {
-  const url = "https://sandbox.mercadopago.com/mla/checkout/pay?pref_id=12345";
-  assert.equal(safeSandboxUrl(url, "12345"), url);
-  for (const bad of ["https://sandbox.mercadopago.com.evil.tld/mla/checkout/pay", "javascript:alert(1)",
-    "https://mercadopago.com/mla/checkout/pay", "http://sandbox.mercadopago.com/mla/checkout/pay",
-    "https://sandbox.mercadopago.com/mla/checkout/pay?pref_id=another-pref",
-    "https://sandbox.mercadopago.com/mla/checkout/pay?pref_id=12345#fragment"]) {
-    assert.throws(() => safeSandboxUrl(bad, "12345"));
+test("only the documented Checkout Pro URL for the verified test preference is accepted", () => {
+  const url = "https://www.mercadopago.com/mla/checkout/start?pref_id=12345";
+  assert.equal(safeTestCheckoutUrl(url, "12345"), url);
+  for (const bad of ["https://www.mercadopago.com.evil.tld/mla/checkout/start?pref_id=12345", "javascript:alert(1)",
+    "https://mercadopago.com/mla/checkout/start?pref_id=12345", "http://www.mercadopago.com/mla/checkout/start?pref_id=12345",
+    "https://sandbox.mercadopago.com/mla/checkout/pay?pref_id=12345",
+    "https://www.mercadopago.com/mla/checkout/start?pref_id=another-pref",
+    "https://www.mercadopago.com/mla/checkout/start?pref_id=12345&pref_id=12345",
+    "https://www.mercadopago.com/mla/checkout/start?pref_id=12345#fragment"]) {
+    assert.throws(() => safeTestCheckoutUrl(bad, "12345"));
   }
+});
+
+test("protected preview webhook uses a project-scoped bypass in the URL, never the return URL", () => {
+  const bypass = "test-isolated-preview-bypass-secret";
+  const url = new URL(cauceProtectedWebhookUrl("https://cauce-retail-preview-genova.vercel.app", bypass));
+  assert.equal(url.pathname, "/api/cauce/checkout/webhook");
+  assert.equal(url.searchParams.get("x-vercel-protection-bypass"), bypass);
+  assert.throws(() => cauceProtectedWebhookUrl("https://cauce-retail-preview-genova.vercel.app", undefined));
+  assert.throws(() => cauceProtectedWebhookUrl("https://other.example.com", bypass));
 });
 
 test("provider confirmation must match order, amount, currency and TEST mode", () => {
@@ -96,12 +107,13 @@ test("expired orders are shown as expired, never falsely confirmed paid", () => 
 });
 
 test("a live seller identity stops Mercado Pago before creating a preference", async () => {
-  const beforeEnv = Object.fromEntries(["CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN", "CAUCE_MERCADOPAGO_TEST_SELLER_ID"].map(k => [k, process.env[k]]));
+  const beforeEnv = Object.fromEntries(["CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN", "CAUCE_MERCADOPAGO_TEST_SELLER_ID", "VERCEL_AUTOMATION_BYPASS_SECRET"].map(k => [k, process.env[k]]));
   const oldFetch = globalThis.fetch;
   const calls: string[] = [];
   try {
     process.env.CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN = "APP_USR-exampletoken123456789";
     process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID = "1234567890";
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET = "test-isolated-preview-bypass-secret";
     globalThis.fetch = async (input: RequestInfo | URL) => {
       calls.push(String(input));
       return Response.json({ id: 1234567890, tags: [], site_id: "MLA" });
@@ -120,19 +132,26 @@ test("a live seller identity stops Mercado Pago before creating a preference", a
   }
 });
 
-test("verified test seller permits sandbox URLs only for its own preference", async () => {
-  const beforeEnv = Object.fromEntries(["CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN", "CAUCE_MERCADOPAGO_TEST_SELLER_ID"].map(k => [k, process.env[k]]));
+test("verified test seller permits Checkout Pro URLs only for its own preference", async () => {
+  const beforeEnv = Object.fromEntries(["CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN", "CAUCE_MERCADOPAGO_TEST_SELLER_ID", "VERCEL_AUTOMATION_BYPASS_SECRET"].map(k => [k, process.env[k]]));
   const oldFetch = globalThis.fetch;
   const calls: string[] = [];
   const id = "1234567890-12345-67890-abcde";
   try {
     process.env.CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN = "APP_USR-exampletoken123456789";
     process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID = "1234567890";
-    globalThis.fetch = async (input: RequestInfo | URL) => {
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET = "test-isolated-preview-bypass-secret";
+    globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       calls.push(String(input));
       if (String(input).endsWith("/users/me")) return Response.json({ id: 1234567890, tags: ["test_user"], site_id: "MLA" });
+      if (String(input).endsWith("/checkout/preferences") && init?.body) {
+        const preference = JSON.parse(String(init.body));
+        const notify = new URL(preference.notification_url);
+        assert.equal(notify.searchParams.get("x-vercel-protection-bypass"), "test-isolated-preview-bypass-secret");
+        assert.equal(preference.back_urls.success.includes("x-vercel-protection-bypass"), false);
+      }
       return Response.json({ id, collector_id: 1234567890,
-        sandbox_init_point: `https://sandbox.mercadopago.com/mla/checkout/pay?pref_id=${id}` });
+        init_point: `https://www.mercadopago.com/mla/checkout/start?pref_id=${id}` });
     };
     const result = await createCaucePreference({
       orderId: "123e4567-e89b-42d3-a456-426614174000", requestKey: "123e4567-e89b-42d3-a456-426614174001",
@@ -140,7 +159,7 @@ test("verified test seller permits sandbox URLs only for its own preference", as
       items: [{ productId: product.id, name: product.name, quantity: 1, unitPrice: product.price }],
     });
     assert.equal(result.id, id);
-    assert.equal(result.url, `https://sandbox.mercadopago.com/mla/checkout/pay?pref_id=${id}`);
+    assert.equal(result.url, `https://www.mercadopago.com/mla/checkout/start?pref_id=${id}`);
     assert.equal(await getCaucePreference(id), result.url);
     assert.deepEqual(calls, [
       "https://api.mercadolibre.com/users/me", "https://api.mercadopago.com/checkout/preferences",
