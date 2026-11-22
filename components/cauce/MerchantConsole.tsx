@@ -7,6 +7,10 @@ import { cauceBrowserAuth } from "@/lib/cauce/auth-browser";
 
 type Product = MerchantData["products"][number];
 type Section = "resumen" | "catalogo" | "inventario" | "pedidos";
+const orderStates: Record<string, string> = {
+  pending: "Pendiente de pago", paid_test: "Pago de prueba aprobado",
+  failed_test: "Pago rechazado", cancelled: "Cancelado", needs_review: "Requiere revisión",
+};
 const images = [
   ...Array.from({ length: 6 }, (_, index) => `/cauce/catalog-a-0${index}.webp`),
   ...Array.from({ length: 6 }, (_, index) => `/cauce/catalog-b-0${index}.webp`),
@@ -147,7 +151,7 @@ export function MerchantConsole({ initial }: { initial: MerchantData }) {
     {section === "pedidos" && <section className="c-merchant-card">
       <div className="c-merchant-panel-head"><div><h2>Pedidos</h2><p>Actividad comercial registrada por el servidor.</p></div></div>
       {data.orders.length ? <div className="c-merchant-table-wrap"><table><thead><tr><th>Pedido</th><th>Estado</th><th>Total</th><th>Fecha</th></tr></thead><tbody>
-        {data.orders.map((order) => <tr key={order.id}><td><strong>{order.id.slice(0,8)}</strong></td><td>{order.status}</td><td>{formatMoney(order.total_amount)}</td><td>{new Date(order.created_at).toLocaleDateString("es-AR")}</td></tr>)}
+        {data.orders.map((order) => <tr key={order.id}><td><strong>{order.id.slice(0,8)}</strong></td><td>{orderStates[order.status] ?? "Estado desconocido"}</td><td>{formatMoney(order.total_amount)}</td><td>{new Date(order.created_at).toLocaleDateString("es-AR")}</td></tr>)}
       </tbody></table></div> : <div className="c-merchant-empty"><h3>Sin pedidos todavía</h3><p>Cuando se habilite el proceso de compra, los pedidos registrados van a aparecer acá.</p></div>}
     </section>}
   </div>;

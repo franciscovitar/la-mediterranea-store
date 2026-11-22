@@ -2,13 +2,15 @@
 
 > **Product direction (21 Nov 2026):** Cauce is becoming a complete, company-usable fictional online store built on this actual Next.js/Supabase codebase. The browser-only `showcase/` is a historical technical simulator, **not** the target product interface. Read the [product contract](docs/PRODUCT_DIRECTION_V2.md), [proposed architecture and reuse matrix](docs/ARCHITECTURE_V2.md), and [ecommerce capability research](docs/FEATURE_RESEARCH_20261121.md).
 
-> **M1 retail foundation — live in isolated staging:** The Next.js routes provide Cauce's own brand, 12 fictional homeware products with optimized photos, homepage, catalog, search, category filter, sorting, product details, persistent wishlists and local cart. The [non-production staging storefront](https://cauce-retail-preview-5pegfjov7-genova.vercel.app/catalogo) now reads its products and stock from the dedicated synthetic Supabase database. The experience is browseable but has no enabled checkout, payment or staff console. See [M1](docs/CAUCE_M1_IMPLEMENTATION.md) and [M2](docs/CAUCE_M2_IMPLEMENTATION.md) evidence and boundaries.
+> **M1 retail foundation — deployed to isolated staging:** The Next.js routes provide Cauce's own brand, 12 fictional homeware products with optimized photos, homepage, catalog, search, category filter, sorting, product details, persistent wishlists and local cart. The [non-production staging storefront](https://cauce-retail-preview-5pegfjov7-genova.vercel.app/catalogo) was verified against the dedicated synthetic Supabase database. See [M1](docs/CAUCE_M1_IMPLEMENTATION.md) and [M2](docs/CAUCE_M2_IMPLEMENTATION.md) for checkpoint evidence.
 
 This repository originated as a reconstruction of a merchandising storefront for **La Mediterránea — Orquesta-Escuela Infantil y Juvenil**. That original commercial project was **not purchased or launched by the prospective customer**. It is now presented as a personal engineering case study, not a delivered customer success. Historical catalog, brand and product images remain here as provenance of that checkpoint, and are not used in the independent public showcase.
 
 **Storefront Preview:** [Cauce Next.js retail staging](https://cauce-retail-preview-5pegfjov7-genova.vercel.app/) (Vercel team authentication may be required). **Older educational simulator:** [technical showcase](https://cauce-commerce-showcase-genova.vercel.app/) in [`showcase/`](showcase/README.md), retained for pricing, conflict, idempotency and callback demonstrations. Explanations for recruiters belong in the portfolio and repository; the storefront remains product-first.
 
 > **M2 staging checkpoint (2026-11-21):** Supabase `cauce-commerce-lab` is isolated, migrated and seeded with 12 fictional products and 154 units. Vercel Preview variables are configured in dedicated project `cauce-retail-preview`; the public API and Chrome desktop/mobile QA confirmed database-backed catalog reads and safety gates. A mobile overflow issue was fixed on this branch. The `/gestion` staff panel remains disabled until an authorized test user and Auth redirect are verified, and concurrency/merchant-write QA is still pending. No payments, customer records, production rollout or `main` merge were enabled. See [M2 details](docs/CAUCE_M2_IMPLEMENTATION.md).
+
+> **M3 local code checkpoint (2026-11-22):** Added an isolated `/pedido` order-review UI and `/api/cauce/checkout/*` quote, test-preference, status and signed-webhook routes. The standalone Cauce Supabase project already has reservation/payment RPCs; their source snapshot is included in the repository. All payment operations remain disabled by default and sandbox credentials are deferred. **Neither end-to-end test payment nor staging deploy of this M3 code has yet been observed.** See [M3 implementation and security gates](docs/CAUCE_M3_IMPLEMENTATION.md).
 
 The historical storefront read its operational catalog from Supabase. Cauce uses a separate synthetic static catalog by default, with a prepared switch to read from a different isolated database after its migration and security QA. Mercado Pago remains intentionally disconnected.
 
@@ -56,7 +58,7 @@ If `tsx --test` cannot create IPC sockets in a restricted Linux runner, `node --
 
 ## Runtime configuration
 
-Copy `.env.example` to `.env.local`. Do not commit credentials. The public URL/key are used by the browser for RLS-protected catalog/Auth access; `SUPABASE_SECRET_KEY` stays server-only for the prepared payment workflow.
+Copy `.env.example` to `.env.local`. Do not commit credentials. Cauce has its own `NEXT_PUBLIC_CAUCE_SUPABASE_*`, `CAUCE_SUPABASE_SECRET_KEY` and `CAUCE_MERCADOPAGO_TEST_*` variables; never reuse the original merchant's Supabase or Mercado Pago credentials. Payment operations stay off until `CAUCE_CHECKOUT_ENABLED=true` and all independent test-only requirements pass.
 
 The remaining payment/deployment gates are documented in [Integration-ready checkpoint](docs/INTEGRATION_READY.md).
 

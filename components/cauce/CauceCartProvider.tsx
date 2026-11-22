@@ -11,11 +11,14 @@ const SAVED_KEY = "cauce-saved-v1";
 
 type CartContextValue = {
   count: number;
+  lines: CartLine[];
+  ready: boolean;
   savedCount: number;
   saved: string[];
   products: CauceProduct[];
   add: (product: CauceProduct, quantity?: number) => void;
   open: () => void;
+  clear: () => void;
   isSaved: (id: string) => boolean;
   toggleSaved: (id: string) => void;
 };
@@ -81,16 +84,19 @@ export function CauceCartProvider({ children, products }: { children: React.Reac
 
   const value = useMemo<CartContextValue>(() => ({
     count: cart.reduce((sum, line) => sum + line.quantity, 0),
+    lines: cart,
+    ready,
     savedCount: saved.length,
     saved,
     products,
     add,
     open: () => setOpen(true),
+    clear: () => setCart((current) => current.length ? [] : current),
     isSaved: (id) => saved.includes(id),
     toggleSaved,
   // Actions operate on current functional state, so they don't depend on cart values.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [cart, saved, products]);
+  }), [cart, saved, products, ready]);
 
   return (
     <Context.Provider value={value}>
@@ -107,9 +113,9 @@ export function CauceCartProvider({ children, products }: { children: React.Reac
             .filter((line) => line.quantity > 0))}
           onRemove={(key) => setCart((current) => current.filter((line) => line.key !== key))}
           onClear={() => setCart([])}
-          checkoutHref={null}
-          checkoutNote="Estamos preparando la apertura de pedidos. Tu selección queda guardada en este navegador."
-          disabledCheckoutLabel="Pedidos próximamente"
+          checkoutHref="/pedido"
+          checkoutButtonLabel="Revisar pedido"
+          checkoutNote="Revisá cantidades y precios antes de continuar. Los pagos reales no están disponibles."
           emptyIcon="◌"
         />
       </div>

@@ -14,7 +14,7 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
 
-export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, checkoutHref = "/checkout", checkoutNote, disabledCheckoutLabel = "Checkout desactivado", emptyIcon = "♪" }: {
+export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, checkoutHref = "/checkout", checkoutNote, checkoutButtonLabel = "Continuar al pago", disabledCheckoutLabel = "Checkout desactivado", emptyIcon = "♪" }: {
   lines: CartLine[];
   open: boolean;
   onClose: () => void;
@@ -23,6 +23,7 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, ch
   onClear: () => void;
   checkoutHref?: string | null;
   checkoutNote?: string;
+  checkoutButtonLabel?: string;
   disabledCheckoutLabel?: string;
   emptyIcon?: string;
 }) {
@@ -123,7 +124,7 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, ch
             <>
               <div className="cart-total"><span>Subtotal</span><strong>{formatMoney(total)}</strong></div>
               {checkoutHref ? (
-                <a className="checkout-button" href={checkoutHref}>Continuar al pago</a>
+                <a className="checkout-button" href={checkoutHref}>{checkoutButtonLabel}</a>
               ) : (
                 <button className="checkout-button" disabled type="button">{disabledCheckoutLabel}</button>
               )}

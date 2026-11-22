@@ -46,6 +46,8 @@ try {
   await probe("/catalogo?categoria=Mesa&q=taza", 200);
   await probe("/producto/taza-bruma", 200);
   await probe("/favoritos", 200);
+  await probe("/pedido", 200);
+  await probe("/pedido/resultado", 200);
   await probe("/producto/no-existe", 404);
   const json = await (await probe("/api/catalog", 200)).json();
   assert.equal(json.products.length, 12);
@@ -60,6 +62,22 @@ try {
     headers: { origin: base, "content-type": "application/json" },
     body: JSON.stringify({}),
   });
+  const quote = await probe("/api/cauce/checkout/quote", 200, "POST", {
+    headers: { origin: base, "content-type": "application/json" },
+    body: JSON.stringify({ lines: [{ productId: "taza-bruma", quantity: 2, price: 1 }] }),
+  });
+  const quotation = await quote.json();
+  assert.equal(quotation.total, 65000, "Cauce must use server-side price, not forged price");
+  assert.equal(quotation.sandboxEnabled, false, "Test payment remains disabled without credentials");
+  await probe("/api/cauce/checkout/create", 503, "POST", {
+    headers: { origin: base, "content-type": "application/json" },
+    body: JSON.stringify({ lines: [{ productId: "taza-bruma", quantity: 1 }], requestKey: "123e4567-e89b-42d3-a456-426614174000" }),
+  });
+  await probe("/api/cauce/checkout/webhook?type=payment&data.id=1234", 503, "POST");
+  await probe("/api/cauce/checkout/quote", 403, "POST", {
+    headers: { origin: "https://forged.invalid", "content-type": "application/json" },
+    body: JSON.stringify({ lines: [{ productId: "taza-bruma", quantity: 1 }] }),
+  });
 
   if (screenshotDir) {
     mkdirSync(screenshotDir, { recursive: true });
@@ -68,6 +86,7 @@ try {
       { name: "catalog-desktop", path: "/catalogo", size: "1440,1000" },
       { name: "product-desktop", path: "/producto/taza-bruma", size: "1440,1000" },
       { name: "home-mobile", path: "/", size: "390,844" },
+      { name: "order-review-mobile", path: "/pedido", size: "390,844" },
     ]) {
       const file = resolve(screenshotDir, `${shot.name}.png`);
       const result = spawnSync("/usr/bin/chromium", ["--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--hide-scrollbars", `--window-size=${shot.size}`, "--virtual-time-budget=1200", `--screenshot=${file}`, base + shot.path], { encoding: "utf8", timeout: 20000 });
