@@ -4,6 +4,7 @@ import { CauceCheckoutError, parseCheckoutLines, quoteCheckout, validCheckoutUui
 import { checkoutHttpError, checkoutJson } from "@/lib/cauce/checkout-http";
 import { cauceOrderClient, getStoredItems, openCauceOrder, sameStoredLines } from "@/lib/cauce/order-store";
 import { createCaucePreference, getCaucePreference } from "@/lib/cauce/payments";
+import { enforceCauceReservationRateLimit } from "@/lib/cauce/rate-limit";
 import { checkSameOrigin } from "@/lib/cauce/validation";
 import { readJsonBody } from "@/lib/http/request";
 
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
     const body = await readJsonBody<{ lines?: unknown; requestKey?: unknown }>(request, 4096);
     const lines = parseCheckoutLines(body?.lines);
     if (!validCheckoutUuid(body?.requestKey)) throw new CauceCheckoutError("Identificador del pedido inválido.");
+    await enforceCauceReservationRateLimit(request, body.requestKey);
     quoteCheckout(lines, await getCauceProducts());
     const client = cauceOrderClient();
     const order = await openCauceOrder(client, body.requestKey, lines);
