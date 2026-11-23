@@ -9,6 +9,7 @@ type Product = MerchantData["products"][number];
 type Section = "resumen" | "catalogo" | "inventario" | "pedidos";
 const orderStates: Record<string, string> = {
   pending: "Pendiente de pago", paid_test: "Pago de prueba aprobado",
+  expired_test: "Reserva vencida",
   failed_test: "Pago rechazado", cancelled: "Cancelado", needs_review: "Requiere revisión",
 };
 const images = [

@@ -6,6 +6,7 @@ import { mapCauceRows } from "../lib/cauce/backend";
 import { caucePublicConfig } from "../lib/cauce/config";
 import { checkSameOrigin, validateCauceProduct, validateStockAdjustment } from "../lib/cauce/validation";
 import { reconcileCauceCart } from "../lib/cauce/cart";
+import { visibleMerchantOrders } from "../lib/cauce/operations";
 
 const product = { ...cauceProducts[0] };
 
@@ -67,6 +68,18 @@ test("Cauce refuses to reuse the original merchant Supabase URL", () => {
       else process.env[key] = value;
     }
   }
+});
+
+test("merchant panel shows expired pending reservations without rewriting order history", () => {
+  const now = Date.parse("2026-11-23T01:00:00Z");
+  const rows = [
+    { id: "a", status: "pending", total_amount: 100, created_at: "2026-11-22T22:00:00Z", expires_at: "2026-11-22T22:30:00Z" },
+    { id: "b", status: "pending", total_amount: 200, created_at: "2026-11-23T00:45:00Z", expires_at: "2026-11-23T01:15:00Z" },
+    { id: "c", status: "paid_test", total_amount: 300, created_at: "2026-11-22T22:00:00Z", expires_at: "2026-11-22T22:30:00Z" },
+  ];
+  assert.deepEqual(visibleMerchantOrders(rows, now).map((row) => row.status), ["expired_test", "pending", "paid_test"]);
+  assert.equal(rows[0].status, "pending");
+  assert.equal("expires_at" in visibleMerchantOrders(rows, now)[0], false);
 });
 
 test("SQL draft has scoped RLS, version guard and no guest order permissions", () => {

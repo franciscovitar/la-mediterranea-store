@@ -1,4 +1,5 @@
 import type { cauceServerAuth } from "@/lib/cauce/auth";
+import { visibleCauceOrderStatus } from "@/lib/cauce/order-store";
 
 type Client = Awaited<ReturnType<typeof cauceServerAuth>>;
 
@@ -9,13 +10,23 @@ export type MerchantData = {
   movements: Array<{ id: number; product_id: string; previous_stock: number; new_stock: number; reason: string; happened_at: string }>;
 };
 
+type MerchantOrderRow = MerchantData["orders"][number] & { expires_at: string };
+
+/** A timed-out reservation must not appear as a live pending sale to staff. */
+export function visibleMerchantOrders(rows: MerchantOrderRow[], nowMs = Date.now()): MerchantData["orders"] {
+  return rows.map(({ expires_at, ...order }) => ({
+    ...order, status: visibleCauceOrderStatus({ status: order.status, expires_at }, nowMs),
+  }));
+}
+
 export async function getMerchantData(client: Client): Promise<MerchantData> {
   const [products, inventory, orders, movements] = await Promise.all([
     client.from("cauce_products").select("*").order("created_at", { ascending: false }),
     client.from("cauce_inventory").select("product_id,stock,version,updated_at"),
-    client.from("cauce_orders").select("id,status,total_amount,created_at").order("created_at", { ascending: false }).limit(30),
+    client.from("cauce_orders").select("id,status,total_amount,created_at,expires_at").order("created_at", { ascending: false }).limit(30),
     client.from("cauce_inventory_movements").select("id,product_id,previous_stock,new_stock,reason,happened_at").order("happened_at", { ascending: false }).limit(20),
   ]);
   for (const result of [products, inventory, orders, movements]) if (result.error) throw result.error;
-  return { products: products.data ?? [], inventory: inventory.data ?? [], orders: orders.data ?? [], movements: movements.data ?? [] };
+  return { products: products.data ?? [], inventory: inventory.data ?? [],
+    orders: visibleMerchantOrders((orders.data ?? []) as MerchantOrderRow[]), movements: movements.data ?? [] };
 }
