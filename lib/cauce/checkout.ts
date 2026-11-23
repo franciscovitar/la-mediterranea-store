@@ -4,6 +4,20 @@ export class CauceCheckoutError extends Error {
   constructor(message: string, public status = 400) { super(message); }
 }
 
+/** Exact provider URL allowlist shared by the server and browser. Never use an arbitrary redirect. */
+export function safeTestCheckoutUrl(value: unknown, expectedPreferenceId?: string) {
+  if (typeof value !== "string") throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502);
+  try {
+    const url = new URL(value);
+    const allowedRoute = (url.hostname === "www.mercadopago.com" && url.pathname === "/mla/checkout/start") ||
+      (url.hostname === "www.mercadopago.com.ar" && url.pathname === "/checkout/v1/redirect");
+    if (url.protocol !== "https:" || !allowedRoute || url.username || url.password ||
+        url.port || url.hash || url.searchParams.size !== 1 || url.searchParams.getAll("pref_id").length !== 1 ||
+        (expectedPreferenceId && url.searchParams.get("pref_id") !== expectedPreferenceId)) throw Error();
+    return url.toString();
+  } catch { throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502); }
+}
+
 export type CheckoutLine = { productId: string; quantity: number };
 export type CheckoutQuoteItem = CheckoutLine & { name: string; unitPrice: number; amount: number };
 
