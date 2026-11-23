@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { caucePublicConfig, cauceSandboxCheckoutEnabled } from "@/lib/cauce/config";
+import { caucePublicConfig, cauceSandboxPaymentProcessingConfigured } from "@/lib/cauce/config";
 import { CauceCheckoutError, type CheckoutLine } from "@/lib/cauce/checkout";
 
 export type StoredOrder = {
@@ -12,7 +12,8 @@ export function visibleCauceOrderStatus(order: Pick<StoredOrder, "status" | "exp
 }
 
 export function cauceOrderClient() {
-  if (!cauceSandboxCheckoutEnabled()) throw new CauceCheckoutError("Los pagos de prueba todavía no están habilitados.", 503);
+  // Existing sandbox payments must remain verifiable after new checkout attempts are paused.
+  if (!cauceSandboxPaymentProcessingConfigured()) throw new CauceCheckoutError("El procesamiento de pagos de prueba no está configurado.", 503);
   const { url } = caucePublicConfig();
   const key = process.env.CAUCE_SUPABASE_SECRET_KEY;
   if (!key) throw new CauceCheckoutError("El checkout no está configurado.", 503);
