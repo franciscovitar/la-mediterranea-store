@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { CauceCheckoutError } from "@/lib/cauce/checkout";
+import { CauceCheckoutError, safeTestCheckoutUrl } from "@/lib/cauce/checkout";
 
 const apiOrigin = "https://api.mercadopago.com";
 const identityUrl = "https://api.mercadolibre.com/users/me";
@@ -82,20 +82,6 @@ async function mpRequest(path: string, init: RequestInit = {}) {
   });
   if (!response.ok) throw new CauceCheckoutError("Mercado Pago no pudo confirmar la operación de prueba.", 502);
   return response.json() as Promise<Record<string, unknown>>;
-}
-
-/** Test sellers use init_point; Mercado Pago currently returns either of these exact Checkout Pro routes. */
-export function safeTestCheckoutUrl(value: unknown, expectedPreferenceId?: string) {
-  if (typeof value !== "string") throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502);
-  try {
-    const url = new URL(value);
-    const allowedRoute = (url.hostname === "www.mercadopago.com" && url.pathname === "/mla/checkout/start") ||
-      (url.hostname === "www.mercadopago.com.ar" && url.pathname === "/checkout/v1/redirect");
-    if (url.protocol !== "https:" || !allowedRoute || url.username || url.password ||
-        url.port || url.hash || url.searchParams.size !== 1 || url.searchParams.getAll("pref_id").length !== 1 ||
-        (expectedPreferenceId && url.searchParams.get("pref_id") !== expectedPreferenceId)) throw Error();
-    return url.toString();
-  } catch { throw new CauceCheckoutError("Enlace de pago de prueba inválido.", 502); }
 }
 
 export async function createCaucePreference(input: {
