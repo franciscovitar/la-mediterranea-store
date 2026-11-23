@@ -3,6 +3,7 @@ import test from "node:test";
 import { POST as quote } from "../app/api/cauce/checkout/quote/route";
 import { POST as create } from "../app/api/cauce/checkout/create/route";
 import { POST as webhook } from "../app/api/cauce/checkout/webhook/route";
+import { POST as reconcile } from "../app/api/cauce/checkout/reconcile/route";
 import { GET as status } from "../app/api/cauce/checkout/status/route";
 import { cauceProducts } from "../lib/cauce/catalog";
 import { cauceSandboxCheckoutEnabled, cauceSandboxPaymentProcessingConfigured } from "../lib/cauce/config";
@@ -34,6 +35,7 @@ test("creation and webhook fail closed before credentials exist", async () => {
   }));
   assert.equal(response.status, 503);
   assert.equal((await webhook(post("/api/cauce/checkout/webhook?type=payment&data.id=1234", {}))).status, 503);
+  assert.equal((await reconcile(post("/api/cauce/checkout/reconcile", {}))).status, 503);
 });
 
 test("pausing new test purchases keeps signed payment handling available", async () => {
@@ -56,12 +58,21 @@ test("pausing new test purchases keeps signed payment handling available", async
       lines: validLines, requestKey: "123e4567-e89b-42d3-a456-426614174000",
     }))).status, 503);
     assert.equal((await webhook(post("/api/cauce/checkout/webhook?type=payment&data.id=123456", {}))).status, 401);
+    assert.equal((await reconcile(post("/api/cauce/checkout/reconcile", {}))).status, 400);
   } finally {
     for (const [key, value] of Object.entries(before)) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
   }
+});
+
+test("reconciliation refuses cross-origin requests and forged payment identifiers", async () => {
+  assert.equal((await reconcile(post("/api/cauce/checkout/reconcile", {}, "https://evil.invalid"))).status, 403);
+  assert.equal((await reconcile(post("/api/cauce/checkout/reconcile", {
+    orderId: "123e4567-e89b-42d3-a456-426614174000",
+    requestKey: "123e4567-e89b-42d3-a456-426614174000", paymentId: "123;DROP TABLE",
+  }))).status, 503);
 });
 
 test("status requires an unguessable pair of UUIDs", async () => {
