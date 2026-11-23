@@ -1,6 +1,6 @@
 import { CauceCheckoutError, validCheckoutUuid } from "@/lib/cauce/checkout";
 import { checkoutHttpError, checkoutJson } from "@/lib/cauce/checkout-http";
-import { cauceSandboxCheckoutEnabled } from "@/lib/cauce/config";
+import { cauceSandboxPaymentProcessingConfigured } from "@/lib/cauce/config";
 import { cauceOrderClient, getStoredOrder } from "@/lib/cauce/order-store";
 import { getCaucePayment, validateCauceProviderPayment, verifyCauceWebhookSignature } from "@/lib/cauce/payments";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    if (!cauceSandboxCheckoutEnabled()) throw new CauceCheckoutError("Webhook no configurado.", 503);
+    if (!cauceSandboxPaymentProcessingConfigured()) throw new CauceCheckoutError("Webhook no configurado.", 503);
     const url = new URL(request.url);
     const id = url.searchParams.get("data.id") ?? "";
     if (url.searchParams.get("type") !== "payment") return checkoutJson({ ignored: true });
