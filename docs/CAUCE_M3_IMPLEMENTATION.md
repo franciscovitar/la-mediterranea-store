@@ -7,14 +7,14 @@
 - El entorno Preview tiene CAUCE_CHECKOUT_ENABLED=false. La interfaz mostró el carrito y el total recalculado por servidor y luego indicó que el pago de prueba no está disponible; no se inició un checkout ni se creó un pedido desde el navegador.
 - Readback inicial de la base Supabase aislada: 12 productos activos, 153 unidades, 3 pedidos, 1 evento de pago, 3 movimientos y 0 reservas activas. Se llamó directamente a la función transaccional con el mismo pago de prueba ya aprobado: devolvió paid_test y no agregó eventos ni movimientos. La función rechazó una llamada con p_test_seller_verified=false.
 - Con dos solicitudes SQL independientes lanzadas en paralelo, cada una reservando las 4 unidades disponibles de canasto-raiz con una clave distinta, una reserva tuvo éxito y la otra fue rechazada por stock insuficiente. Se probó además dos llamadas concurrentes con una misma clave de idempotencia: quedaron en una sola reserva. Las reservas sintéticas usadas para estas pruebas fueron marcadas cancelled; el readback final mantuvo 153 unidades, 1 evento, 3 movimientos y 0 reservas activas. Esto prueba la serialización de la función SQL en esta base; no es un benchmark de carga ni una prueba paralela a través de HTTP.
-- Revisión del alcance de limitación: no hay una cuota durable por visitante en la ruta que abre reservas. Con checkout nuevo apagado, el Preview rechaza la creación antes de reservar; la ausencia del limitador sigue siendo un gate previo a reactivar el checkout o ampliar acceso. La protección SSO sigue activa y no se cambió ninguna configuración de firewall con posible costo.
+- Se agregó cuota durable antes de abrir una reserva: cinco claves distintas por cliente en diez minutos mediante el RPC cauce_reservation_rate_limit de la base aislada. La IP de Vercel y la clave de idempotencia se convierten a HMAC en servidor; el RPC sólo es ejecutable por service_role y la tabla tiene RLS sin acceso directo. El límite permite repetir la misma clave, devuelve 429 al superar la cuota y falla cerrado si falta la IP confiable o falla el RPC. La migración se aplicó sólo a cauce-commerce-lab; CAUCE_CHECKOUT_ENABLED permanece false.
 - El test de ruta que describía firmas inválidas/vencidas como “replay” fue corregido: ahora una prueba repite la misma solicitud, firma y request-id válidos y confirma que ambas entregas alcanzan el RPC idempotente. La aceptación HTTP de una entrega repetida no demuestra por sí sola idempotencia de inventario; esa garantía corresponde al RPC y se verificó por separado arriba.
 
 ### Pendientes no certificados en este cierre
 
 - No se ejecutaron con Mercado Pago real las rutas de pago rechazado (OTHE) o pendiente (CONT), ni una entrega de webhook firmada exitosa desde Developers. La simulación previa con un ID inexistente acabó en 502 y no constituye prueba positiva.
 - No se pudo ejecutar un POST contra el deployment protegido desde esta sesión. Las pruebas de la ruta en el repositorio usan proveedor/DB HTTP simulados; el nuevo test todavía debe pasar CI.
-- No se ejecutaron pruebas de abuso por HTTP, carga prolongada ni un benchmark con múltiples workers. El checkout sigue apagado y el limitador durable queda como gate para habilitarlo.
+- No se ejecutaron pruebas de abuso por HTTP ni carga prolongada a través de múltiples workers. La función SQL sí se probó con llamadas concurrentes; el checkout sigue apagado, así que no se abrió tráfico de compra.
 
 
 **Checkpoint:** 2026-11-22. **Scope:** isolated Cauce branch, local code and tests; no historical merchant changes, live charges, Production deploy, or protected-branch merge. The paragraphs describing M3 before credentials were configured are preserved as historical checkpoints; the latest verified state is below.
@@ -117,3 +117,13 @@ The plain `npm test` script uses `tsx --test`; in some restricted local runners 
 - También se desplegó ese SHA al proyecto aislado de Cauce con target `staging`; quedó **READY** y enlazado al Preview de la rama. GET de la portada devolvió HTTP 200 y título de Cauce; GET de `/api/cauce/catalog` devolvió HTTP 200 con 12 productos y 153 unidades.
 - El alias estable `cauce-retail-preview-genova.vercel.app` continúa apuntando al deployment de la rama anterior `feat/cauce-retail-foundation-20261121`; el deployment de este PR tiene alias propio. No se movió el alias estable.
 - Esta validación confirma build/Preview y lectura del catálogo sobre el SHA con los tests actualizados. No es prueba HTTP de pago/webhook: el checkout permanece apagado, no se envió POST al Preview protegido y no se creó ninguna compra.
+
+## Cuota persistente y Preview del commit de código — 2026-11-23
+
+- El limitador admite cinco request keys distintas por cliente por ventana de diez minutos; repetir una request key ya vista no consume cupo. Dirección IP y request key se guardan como HMAC; no se guarda la IP cruda.
+- La migración de Cauce se aplicó al proyecto Supabase aislado. Pruebas sintéticas: cinco intentos permitidos, sexto denegado, retry idempotente permitido, ventana expirada restablecida y entradas inválidas rechazadas; la fila sintética se eliminó. RLS quedó activo; EXECUTE fue falso para anon/authenticated y verdadero para service_role.
+- Siete llamadas concurrentes a la función con keys distintas dieron 5 permitidas / 2 denegadas; dos llamadas adicionales fueron denegadas. Los intentos sintéticos se eliminaron y la tabla quedó sin filas de prueba.
+- CI run 66 para el commit de código y tests 5f23d433c7dd9d3612b4586083d204296786765c: SUCCESS (catálogo, TypeScript, tests, showcase y build).
+- Preview de Cauce con ese SHA quedó READY; portada HTTP 200 y catálogo HTTP 200, 12 productos, 153 unidades. Checkout continuó apagado; no se generó pedido ni pago.
+- La prueba de cuota fue directa contra el RPC de base, no una carga HTTP de la ruta. Quedan pendientes la entrega real firmada de Mercado Pago y los resultados OTHE/CONT; los tests de ruta siguen usando proveedor simulado. El alias estable de Preview permanece en el deployment anterior.
+
