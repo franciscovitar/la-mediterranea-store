@@ -6,15 +6,20 @@ export function cauceMerchantEnabled() {
   return cauceDatabaseEnabled() && process.env.CAUCE_MERCHANT_ENABLED === "true";
 }
 
-/** Never reuse the historic store's Mercado Pago or Supabase credentials. */
-export function cauceSandboxCheckoutEnabled() {
-  return cauceDatabaseEnabled() && process.env.CAUCE_CHECKOUT_ENABLED === "true" &&
+/** Keep processing signed test notifications for orders started before checkout is paused. */
+export function cauceSandboxPaymentProcessingConfigured() {
+  return cauceDatabaseEnabled() &&
     !!process.env.CAUCE_SUPABASE_SECRET_KEY &&
     /^APP_USR-[A-Za-z0-9_-]{12,}$/.test(process.env.CAUCE_MERCADOPAGO_TEST_ACCESS_TOKEN ?? "") &&
     /^\d{5,20}$/.test(process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID ?? "") &&
     !!process.env.CAUCE_MERCADOPAGO_WEBHOOK_SECRET &&
     /^[A-Za-z0-9_-]{20,200}$/.test(process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? "") &&
     cauceCheckoutOrigin() !== null;
+}
+
+/** Never reuse the historic store's Mercado Pago or Supabase credentials. */
+export function cauceSandboxCheckoutEnabled() {
+  return process.env.CAUCE_CHECKOUT_ENABLED === "true" && cauceSandboxPaymentProcessingConfigured();
 }
 
 export function cauceCheckoutOrigin() {
