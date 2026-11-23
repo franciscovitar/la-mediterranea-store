@@ -7,6 +7,7 @@ import { POST as reconcile } from "../app/api/cauce/checkout/reconcile/route";
 import { GET as status } from "../app/api/cauce/checkout/status/route";
 import { cauceProducts } from "../lib/cauce/catalog";
 import { cauceSandboxCheckoutEnabled, cauceSandboxPaymentProcessingConfigured } from "../lib/cauce/config";
+import { isCauceOfficialTestCard, validateCauceProviderPayment } from "../lib/cauce/payments";
 
 const origin = "http://localhost:3000";
 const validLines = [{ productId: cauceProducts[0].id, quantity: 2, price: 1 }];
@@ -78,4 +79,22 @@ test("reconciliation refuses cross-origin requests and forged payment identifier
 test("status requires an unguessable pair of UUIDs", async () => {
   const response = await status(new Request(`${origin}/api/cauce/checkout/status?order=not-valid&key=nope`));
   assert.equal(response.status, 400);
+});
+
+test("Checkout Pro accepts live_mode=true only with a matching official test card and seller", () => {
+  const payment = {
+    id: 191136243454, external_reference: "123e4567-e89b-42d3-a456-426614174000",
+    collector_id: 1765413554, live_mode: true, currency_id: "ARS",
+    transaction_amount: 28500, status: "approved", payment_method_id: "visa",
+    card: { first_six_digits: "450995", last_four_digits: "3704" },
+  };
+  const expected = { paymentId: "191136243454", orderId: payment.external_reference,
+    totalAmount: 28500, sellerId: "1765413554" };
+  assert.equal(isCauceOfficialTestCard(payment), true);
+  assert.equal(validateCauceProviderPayment(payment, expected), "approved");
+  assert.equal(validateCauceProviderPayment({ ...payment, live_mode: false }, expected), "approved");
+  assert.throws(() => validateCauceProviderPayment({ ...payment, live_mode: undefined }, expected));
+  assert.throws(() => validateCauceProviderPayment({ ...payment, collector_id: 999 }, expected));
+  assert.throws(() => validateCauceProviderPayment({ ...payment, transaction_amount: 1 }, expected));
+  assert.throws(() => validateCauceProviderPayment({ ...payment, card: { first_six_digits: "450995", last_four_digits: "9999" } }, expected));
 });

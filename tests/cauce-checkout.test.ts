@@ -78,13 +78,17 @@ test("protected preview webhook uses a project-scoped bypass in the URL, never t
   assert.throws(() => cauceProtectedWebhookUrl("https://other.example.com", bypass));
 });
 
-test("provider confirmation must match order, amount, currency and TEST mode", () => {
-  const expected = { paymentId: "1234", orderId: "123e4567-e89b-42d3-a456-426614174000", totalAmount: 65000 };
+test("provider confirmation must match order, amount, currency and sandbox seller/card proof", () => {
+  const expected = { paymentId: "1234", orderId: "123e4567-e89b-42d3-a456-426614174000", totalAmount: 65000, sellerId: "1765413554" };
   const payment = { id: 1234, external_reference: expected.orderId, live_mode: false,
+    collector_id: 1765413554, payment_method_id: "visa",
+    card: { first_six_digits: "450995", last_four_digits: "3704" },
     currency_id: "ARS", transaction_amount: 65000, status: "approved" };
   assert.equal(validateCauceProviderPayment(payment, expected), "approved");
+  assert.equal(validateCauceProviderPayment({ ...payment, live_mode: true }, expected), "approved");
   for (const change of [
-    { live_mode: true }, { currency_id: "USD" }, { transaction_amount: 64999 },
+    { live_mode: null }, { currency_id: "USD" }, { transaction_amount: 64999 },
+    { collector_id: 999 }, { card: { first_six_digits: "450995", last_four_digits: "1111" } },
     { external_reference: "123e4567-e89b-42d3-a456-426614174001" }, { id: 5555 }, { status: "refunded" },
   ]) assert.throws(() => validateCauceProviderPayment({ ...payment, ...change }, expected));
 });

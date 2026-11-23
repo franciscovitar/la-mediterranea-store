@@ -123,13 +123,32 @@ export async function getCaucePayment(id: string) {
   return mpRequest(`/v1/payments/${id}`);
 }
 
+// Official Mercado Pago Argentina test cards. We verify both the method and
+// the exposed BIN/last four; no full card details are stored or logged.
+const officialTestCards: Record<string, readonly string[]> = {
+  visa: ["450995:3704", "400276:5619"],
+  master: ["503175:0604", "528733:3304"],
+  amex: ["371180:7522"],
+};
+
+export function isCauceOfficialTestCard(payment: Record<string, unknown>) {
+  const card = payment.card;
+  if (!card || typeof card !== "object" || Array.isArray(card)) return false;
+  const cardDetails = card as Record<string, unknown>;
+  const method = String(payment.payment_method_id ?? "");
+  const partialCard = `${String(cardDetails.first_six_digits ?? "")}:${String(cardDetails.last_four_digits ?? "")}`;
+  return officialTestCards[method]?.includes(partialCard) ?? false;
+}
+
 export function validateCauceProviderPayment(payment: Record<string, unknown>, expected: {
-  paymentId: string; orderId: string; totalAmount: number;
+  paymentId: string; orderId: string; totalAmount: number; sellerId: string;
 }) {
   const checks = {
     paymentId: String(payment.id) === expected.paymentId,
     externalReference: payment.external_reference === expected.orderId,
-    testMode: payment.live_mode === false,
+    testSeller: /^\d{5,20}$/.test(expected.sellerId) && String(payment.collector_id) === expected.sellerId,
+    officialTestCard: isCauceOfficialTestCard(payment),
+    modeKnown: typeof payment.live_mode === "boolean",
     currency: payment.currency_id === "ARS",
     integerAmount: typeof payment.transaction_amount === "number" && Number.isSafeInteger(payment.transaction_amount),
     amount: payment.transaction_amount === expected.totalAmount,
@@ -138,17 +157,12 @@ export function validateCauceProviderPayment(payment: Record<string, unknown>, e
   const failed = Object.entries(checks).filter(([, valid]) => !valid).map(([field]) => field);
   if (failed.length > 0) {
     // Only non-identifying flags: no customer, card, payment or secret data in logs.
-    const card = payment.card && typeof payment.card === "object" ? payment.card as Record<string, unknown> : {};
-    const payer = payment.payer && typeof payment.payer === "object" ? payment.payer as Record<string, unknown> : {};
-    console.warn("CAUCE_TEST_PAYMENT_VERIFICATION_FAILED", {
-      fields: failed,
-      providerSaysLive: payment.live_mode === true,
-      providerModeMissing: payment.live_mode === undefined,
-      knownVisaTestCard: String(card.first_six_digits) === "450995" && String(card.last_four_digits) === "3704",
-      paymentMethodVisa: payment.payment_method_id === "visa",
-      payerPresent: !!payer.id,
-    });
+    console.warn("CAUCE_TEST_PAYMENT_VERIFICATION_FAILED", { fields: failed });
     throw new CauceCheckoutError("El pago no coincide con este pedido de prueba.", 422);
   }
+  // Checkout Pro with production credentials of a *test_user* seller can
+  // return live_mode=true. The seller account is independently attested by
+  // /users/me before each MP API call; this payment's seller and official
+  // test-card fingerprints must both match before this status is trusted.
   return payment.status as "approved" | "pending" | "in_process" | "rejected" | "cancelled";
 }

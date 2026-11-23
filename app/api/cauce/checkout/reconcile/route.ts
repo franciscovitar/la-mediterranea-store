@@ -29,11 +29,13 @@ export async function POST(request: Request) {
     }
     const status = validateCauceProviderPayment(payment, {
       paymentId: body.paymentId, orderId: order.id, totalAmount: order.total_amount,
+      sellerId: process.env.CAUCE_MERCADOPAGO_TEST_SELLER_ID ?? "",
     });
-    const { data, error } = await client.rpc("cauce_checkout_apply_payment", {
+    const { data, error } = await client.rpc("cauce_checkout_apply_proven_test_payment", {
       p_order_id: order.id, p_payment_id: body.paymentId, p_preference_id: order.preference_id,
       p_provider_status: status, p_amount: payment.transaction_amount,
       p_currency: payment.currency_id, p_live_mode: payment.live_mode,
+      p_test_seller_verified: true, p_test_card_verified: true,
     });
     if (error) throw new CauceCheckoutError("La confirmación quedó pendiente de reintento.", 503);
     return checkoutJson({ verified: true, status: data });
