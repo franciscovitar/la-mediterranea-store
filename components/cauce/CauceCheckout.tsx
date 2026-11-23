@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCauceCart } from "@/components/cauce/CauceCartProvider";
+import { safeTestCheckoutUrl } from "@/lib/cauce/checkout";
 import { formatMoney } from "@/lib/products";
 
 type Quote = { currency: "ARS"; total: number; sandboxEnabled: boolean;
@@ -58,9 +59,7 @@ export function CauceCheckout() {
         }
         throw new Error(result.error ?? "No se pudo comenzar el pago.");
       }
-      const destination = new URL(result.checkoutUrl);
-      if (destination.protocol !== "https:" || destination.hostname !== "sandbox.mercadopago.com") throw new Error("Destino de prueba inválido.");
-      window.location.assign(destination.href);
+      window.location.assign(safeTestCheckoutUrl(result.checkoutUrl));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Error al iniciar el pago."); setStarting(false); }
   }
 
