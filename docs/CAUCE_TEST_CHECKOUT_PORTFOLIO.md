@@ -42,3 +42,13 @@ Sources:
 - https://www.mercadopago.com.ar/developers/es/docs/checkout-api-payments/error-messages/card-token-creation-errors
 
 Acceptance: Cauce PR Preview only, responsive/mobile screenshot and scroll QA, historical production unchanged, no actual payments initiated during this CSS/documentation repair.
+
+## M5 — Non-approved test payment evidence correction (2026-11-23)
+
+Observed official Mercado Pago test runs: APRO approved and fully reconciled in Cauce. OTHE and CONT were accepted by provider, but Vercel logs showed `CAUCE_TEST_PAYMENT_VERIFICATION_FAILED { fields: ['officialTestCard'] }` on signed webhook and reconciliation. The isolated order `ff59f35f…` for ARS 74,500 remained pending, with zero associated inventory movements.
+
+**Root cause:** Provider responses for non-approved attempts need not contain a recognizable card fingerprint. Previous logic required the exact official test-card fingerprint for every state, even though only an **approved** provider payment can cause a stock change. Prior RPC callers also supplied `p_test_card_verified: true` unconditionally.
+
+**Fix:** retain strict exact-order, seller, amount, currency, provider-ID and valid-status checks for all results. Only `approved` requires matching an official test-card fingerprint. The webhook and reconciliation now send the **actual** test-card verification boolean; M5 RPC enforces this distinction and never marks a non-approved payment as paid. SQL permissions remain `service_role` only. The existing multi-attempt ambiguity remains fail-closed rather than guessing which attempt is valid.
+
+**Acceptance:** Unit regression matrix for missing / partial / unknown card data across `pending`, `in_process`, `rejected`, `cancelled`; approved without matching card still rejected; CI/build; isolated M5 migration and readback. The original screenshot is provider evidence, not automatically a post-fix E2E rerun.

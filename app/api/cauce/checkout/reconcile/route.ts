@@ -2,7 +2,7 @@ import { CauceCheckoutError, validCheckoutUuid } from "@/lib/cauce/checkout";
 import { checkoutHttpError, checkoutJson } from "@/lib/cauce/checkout-http";
 import { cauceSandboxPaymentProcessingConfigured } from "@/lib/cauce/config";
 import { cauceOrderClient, getStoredOrder } from "@/lib/cauce/order-store";
-import { getCaucePayment, getCaucePaymentByOrderReference, validateCauceProviderPayment } from "@/lib/cauce/payments";
+import { getCaucePayment, getCaucePaymentByOrderReference, isCauceOfficialTestCard, validateCauceProviderPayment } from "@/lib/cauce/payments";
 import { checkSameOrigin } from "@/lib/cauce/validation";
 import { readJsonBody } from "@/lib/http/request";
 
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       p_order_id: order.id, p_payment_id: id, p_preference_id: order.preference_id,
       p_provider_status: status, p_amount: payment.transaction_amount,
       p_currency: payment.currency_id, p_live_mode: payment.live_mode,
-      p_test_seller_verified: true, p_test_card_verified: true,
+      p_test_seller_verified: true, p_test_card_verified: isCauceOfficialTestCard(payment),
     });
     if (error) throw new CauceCheckoutError("La confirmación quedó pendiente de reintento.", 503);
     return checkoutJson({ verified: true, status: data });

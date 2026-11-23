@@ -187,7 +187,9 @@ export function validateCauceProviderPayment(payment: Record<string, unknown>, e
     paymentId: String(payment.id) === expected.paymentId,
     externalReference: payment.external_reference === expected.orderId,
     testSeller: /^\d{5,20}$/.test(expected.sellerId) && String(payment.collector_id) === expected.sellerId,
-    officialTestCard: isCauceOfficialTestCard(payment),
+    // Mercado Pago can omit the card fingerprint for rejected/pending attempts.
+    // No sale or stock decrement is allowed without official test-card proof.
+    officialTestCard: payment.status !== "approved" || isCauceOfficialTestCard(payment),
     modeKnown: typeof payment.live_mode === "boolean",
     currency: payment.currency_id === "ARS",
     integerAmount: typeof payment.transaction_amount === "number" && Number.isSafeInteger(payment.transaction_amount),
@@ -202,7 +204,8 @@ export function validateCauceProviderPayment(payment: Record<string, unknown>, e
   }
   // Checkout Pro with production credentials of a *test_user* seller can
   // return live_mode=true. The seller account is independently attested by
-  // /users/me before each MP API call; this payment's seller and official
-  // test-card fingerprints must both match before this status is trusted.
+  // /users/me before each MP API call. Approved payments additionally require
+  // the known official test-card fingerprint before affecting inventory.
+  // Non-approved attempts never imply that a test card was verified.
   return payment.status as "approved" | "pending" | "in_process" | "rejected" | "cancelled";
 }
