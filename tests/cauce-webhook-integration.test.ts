@@ -100,7 +100,7 @@ for (const [providerStatus, expectedStatus] of [
   });
 }
 
-test("invalid and replayed webhook signatures return 401 before any provider or DB access", async () => {
+test("invalid and expired webhook signatures return 401 before any provider or DB access", async () => {
   await withSandbox("approved", async (invoke, calls) => {
     const wrong = await invoke(signedRequest({ signature: "ts=1700000000,v1=" + "0".repeat(64) }));
     assert.equal(wrong.status, 401);
@@ -119,11 +119,14 @@ test("signed payment with forged card fingerprint is rejected before stock RPC",
   }, { card: { first_six_digits: "450995", last_four_digits: "9999" } });
 });
 
-test("duplicate signed notification returns success but delegates idempotency to transactional RPC", async () => {
+test("an identical fresh signed notification can be replayed and delegates idempotency to transactional RPC", async () => {
   await withSandbox("approved", async (invoke, calls) => {
-    assert.equal((await invoke(signedRequest())).status, 200);
-    assert.equal((await invoke(signedRequest())).status, 200);
+    const request = signedRequest();
+    const signature = request.headers.get("x-signature");
+    assert.equal((await invoke(request.clone())).status, 200);
+    assert.equal((await invoke(request)).status, 200);
     assert.equal(calls.rpcBodies.length, 2);
     assert.equal(calls.rpcBodies[0].p_payment_id, calls.rpcBodies[1].p_payment_id);
+    assert.ok(signature);
   });
 });

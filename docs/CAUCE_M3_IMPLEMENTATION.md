@@ -1,5 +1,22 @@
 # Cauce Commerce Lab — M3 test-only order/payment flow
 
+## Auditoría de cierre — 2026-11-23
+
+- GitHub main está en el merge de PR #18, c44c1047af8cc493a8580f33e838bdc0a01af626. PAS main se consultó en 194c3ea9c5884c804d634cfd02ba964232b4ad93; no se halló un registro de Cauce en el árbol de ese repositorio. No se hicieron cambios a ninguno de esos main.
+- Vercel: el proyecto de La Mediterránea informa su deployment main en estado READY y target production, SHA c44c1047…; el proyecto aislado Cauce informa un deployment READY de staging en ba6281667e9e955f883463832ff2935fb5880636, de la rama previa a la fusión. La protección SSO del proyecto Cauce está activada. No se solicitó ni se hizo una promoción o modificación de Production.
+- El entorno Preview tiene CAUCE_CHECKOUT_ENABLED=false. La interfaz mostró el carrito y el total recalculado por servidor y luego indicó que el pago de prueba no está disponible; no se inició un checkout ni se creó un pedido desde el navegador.
+- Readback inicial de la base Supabase aislada: 12 productos activos, 153 unidades, 3 pedidos, 1 evento de pago, 3 movimientos y 0 reservas activas. Se llamó directamente a la función transaccional con el mismo pago de prueba ya aprobado: devolvió paid_test y no agregó eventos ni movimientos. La función rechazó una llamada con p_test_seller_verified=false.
+- Con dos solicitudes SQL independientes lanzadas en paralelo, cada una reservando las 4 unidades disponibles de canasto-raiz con una clave distinta, una reserva tuvo éxito y la otra fue rechazada por stock insuficiente. Se probó además dos llamadas concurrentes con una misma clave de idempotencia: quedaron en una sola reserva. Las reservas sintéticas usadas para estas pruebas fueron marcadas cancelled; el readback final mantuvo 153 unidades, 1 evento, 3 movimientos y 0 reservas activas. Esto prueba la serialización de la función SQL en esta base; no es un benchmark de carga ni una prueba paralela a través de HTTP.
+- Revisión del alcance de limitación: no hay una cuota durable por visitante en la ruta que abre reservas. Con checkout nuevo apagado, el Preview rechaza la creación antes de reservar; la ausencia del limitador sigue siendo un gate previo a reactivar el checkout o ampliar acceso. La protección SSO sigue activa y no se cambió ninguna configuración de firewall con posible costo.
+- El test de ruta que describía firmas inválidas/vencidas como “replay” fue corregido: ahora una prueba repite la misma solicitud, firma y request-id válidos y confirma que ambas entregas alcanzan el RPC idempotente. La aceptación HTTP de una entrega repetida no demuestra por sí sola idempotencia de inventario; esa garantía corresponde al RPC y se verificó por separado arriba.
+
+### Pendientes no certificados en este cierre
+
+- No se ejecutaron con Mercado Pago real las rutas de pago rechazado (OTHE) o pendiente (CONT), ni una entrega de webhook firmada exitosa desde Developers. La simulación previa con un ID inexistente acabó en 502 y no constituye prueba positiva.
+- No se pudo ejecutar un POST contra el deployment protegido desde esta sesión. Las pruebas de la ruta en el repositorio usan proveedor/DB HTTP simulados; el nuevo test todavía debe pasar CI.
+- No se ejecutaron pruebas de abuso por HTTP, carga prolongada ni un benchmark con múltiples workers. El checkout sigue apagado y el limitador durable queda como gate para habilitarlo.
+
+
 **Checkpoint:** 2026-11-22. **Scope:** isolated Cauce branch, local code and tests; no historical merchant changes, live charges, Production deploy, or protected-branch merge. The paragraphs describing M3 before credentials were configured are preserved as historical checkpoints; the latest verified state is below.
 
 ## Follow-up QA — 2026-11-22, protected staging
