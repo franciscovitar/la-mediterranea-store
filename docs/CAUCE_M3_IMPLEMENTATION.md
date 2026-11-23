@@ -2,6 +2,13 @@
 
 **Checkpoint:** 2026-11-22. **Scope:** isolated Cauce branch, local code and tests; no historical merchant changes, live charges, Production deploy, or protected-branch merge. The paragraphs describing M3 before credentials were configured are preserved as historical checkpoints; the latest verified state is below.
 
+## Follow-up QA — 2026-11-22, protected staging
+
+- The current Preview deployed at `36f8c35ad829c82a441a5430e977d48b3eb9cf5f` was **READY**. A browser visited the already-approved synthetic order's result URL with `return=success` and **no** `payment_id`; the UI displayed *Pago de prueba confirmado*, ARS 28,500. Read-only SQL afterward still showed stock 16 for `vela-ambar`, total stock 153, one sale movement and one payment event. The UI alone does not independently prove the provider search's HTTP status, so do not label that endpoint separately E2E-certified.
+- `tests/cauce-webhook-integration.test.ts` exercises the **actual POST route** with synthetic MP and Supabase HTTP fixtures: signed approved/pending/rejected, invalid/expired signatures before any downstream request, wrong test-card fingerprint before the stock RPC, and a repeated signed event. The DB's separately tested RPC is responsible for exactly-once stock mutation; mocked HTTP is not a live provider delivery.
+- The signed-in Mercado Pago Developers tab for **Cauce Commerce Lab Test** required renewed account-owner SMS/WhatsApp/voice verification when opening the integration. The Cauce `/gestion` page required a new staff magic-link session. No codes were requested, intercepted or guessed. **Developer notification simulation and browser-authenticated staff QA remain blocked on account-owner login**; SQL role simulation is available but not a substitute.
+- For this test-only protected Preview, `CAUCE_CHECKOUT_ENABLED=false` intentionally blocks new guest reservations while existing reconciliations and signed callbacks still work. There is no claim of public rate limiting: before exposing any new checkout URL beyond SSO, implement and load-test a durable abuse quota in the isolated backend and independently approve public access. No new payment attempt was initiated during this follow-up.
+
 ## Current acceptance checkpoint — approved test payment, idempotent stock
 
 - Mercado Pago Checkout Pro returned **approved** for the official test Visa on a seller whose authenticated `/users/me` identity has tag `test_user`. Test operation `191136243454`, ARS 28,500; the payment's `live_mode=true` was observed. Mercado Pago's published Checkout Pro guidance permits production-mode `init_point` and credentials from a **test seller** for fictitious transactions. It does **not** make arbitrary production accounts or cards safe.
