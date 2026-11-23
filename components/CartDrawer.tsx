@@ -14,7 +14,7 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
 
-export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, checkoutHref = "/checkout", checkoutNote }: {
+export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, checkoutHref = "/checkout", checkoutNote, checkoutButtonLabel = "Continuar al pago", disabledCheckoutLabel = "Checkout desactivado", emptyIcon = "♪" }: {
   lines: CartLine[];
   open: boolean;
   onClose: () => void;
@@ -23,6 +23,9 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, ch
   onClear: () => void;
   checkoutHref?: string | null;
   checkoutNote?: string;
+  checkoutButtonLabel?: string;
+  disabledCheckoutLabel?: string;
+  emptyIcon?: string;
 }) {
   const drawerRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -88,7 +91,7 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, ch
         <div className={`cart-body ${lines.length ? "" : "is-empty"}`}>
           {lines.length === 0 ? (
             <div className="cart-empty">
-              <span aria-hidden="true">♪</span>
+              <span aria-hidden="true">{emptyIcon}</span>
               <h3>Tu carrito está vacío</h3>
               <p>Elegí un producto del catálogo y lo vas a encontrar acá.</p>
             </div>
@@ -121,9 +124,9 @@ export function CartDrawer({ lines, open, onClose, onStep, onRemove, onClear, ch
             <>
               <div className="cart-total"><span>Subtotal</span><strong>{formatMoney(total)}</strong></div>
               {checkoutHref ? (
-                <a className="checkout-button" href={checkoutHref}>Continuar al pago</a>
+                <a className="checkout-button" href={checkoutHref}>{checkoutButtonLabel}</a>
               ) : (
-                <button className="checkout-button" disabled type="button">Checkout desactivado</button>
+                <button className="checkout-button" disabled type="button">{disabledCheckoutLabel}</button>
               )}
               <p className="cart-pending">{checkoutNote ?? "Vas a revisar el pedido antes de abrir Mercado Pago."}</p>
               <button className="text-button clear-cart" onClick={onClear} type="button">Vaciar carrito</button>
