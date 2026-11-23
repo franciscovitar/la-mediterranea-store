@@ -137,8 +137,17 @@ export function validateCauceProviderPayment(payment: Record<string, unknown>, e
   };
   const failed = Object.entries(checks).filter(([, valid]) => !valid).map(([field]) => field);
   if (failed.length > 0) {
-    // Only field names: no customer, card, payment or secret data in diagnostic logs.
-    console.warn("CAUCE_TEST_PAYMENT_VERIFICATION_FAILED", { fields: failed });
+    // Only non-identifying flags: no customer, card, payment or secret data in logs.
+    const card = payment.card && typeof payment.card === "object" ? payment.card as Record<string, unknown> : {};
+    const payer = payment.payer && typeof payment.payer === "object" ? payment.payer as Record<string, unknown> : {};
+    console.warn("CAUCE_TEST_PAYMENT_VERIFICATION_FAILED", {
+      fields: failed,
+      providerSaysLive: payment.live_mode === true,
+      providerModeMissing: payment.live_mode === undefined,
+      knownVisaTestCard: String(card.first_six_digits) === "450995" && String(card.last_four_digits) === "3704",
+      paymentMethodVisa: payment.payment_method_id === "visa",
+      payerPresent: !!payer.id,
+    });
     throw new CauceCheckoutError("El pago no coincide con este pedido de prueba.", 422);
   }
   return payment.status as "approved" | "pending" | "in_process" | "rejected" | "cancelled";
