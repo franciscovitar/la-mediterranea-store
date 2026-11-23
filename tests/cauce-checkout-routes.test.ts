@@ -99,6 +99,19 @@ test("Checkout Pro accepts live_mode=true only with a matching official test car
   assert.throws(() => validateCauceProviderPayment({ ...payment, card: { first_six_digits: "450995", last_four_digits: "9999" } }, expected));
 });
 
+test("server routes pass the actual official test-card verification result to the restricted RPC", () => {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const reconcileRoute = fs.readFileSync("app/api/cauce/checkout/reconcile/route.ts", "utf8");
+  const webhookRoute = fs.readFileSync("app/api/cauce/checkout/webhook/route.ts", "utf8");
+  for (const source of [reconcileRoute, webhookRoute]) {
+    assert.match(source, /p_test_card_verified:\s*isCauceOfficialTestCard\(payment\)/);
+    assert.doesNotMatch(source, /p_test_card_verified:\s*true/);
+  }
+  const rpc = fs.readFileSync("supabase/cauce/M5_NON_APPROVED_TEST_PAYMENTS.sql", "utf8");
+  assert.match(rpc, /p_provider_status\s*=\s*'approved'\s+and\s+p_test_card_verified\s+is\s+distinct\s+from\s+true/i);
+  assert.match(rpc, /p_test_seller_verified\s+is\s+distinct\s+from\s+true/i);
+});
+
 test("search result without a payment is pending, but multiple payments require manual review", () => {
   assert.equal(oneCauceSearchPaymentId({ paging: { total: 0 }, results: [] }), null);
   assert.equal(oneCauceSearchPaymentId({ paging: { total: 1 }, results: [{ id: 191136243454 }] }), "191136243454");

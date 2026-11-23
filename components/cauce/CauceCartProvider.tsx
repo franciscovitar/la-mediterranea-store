@@ -100,8 +100,8 @@ export function CauceCartProvider({ children, products }: { children: React.Reac
 
   return (
     <Context.Provider value={value}>
-      <div className="c-site">{children}</div>
       <div className="c-site">
+        {children}
         <CartDrawer
           lines={cart}
           open={open}
@@ -118,10 +118,10 @@ export function CauceCartProvider({ children, products }: { children: React.Reac
           checkoutNote="Revisá cantidades y precios antes de continuar. Los pagos reales no están disponibles."
           emptyIcon="◌"
         />
-      </div>
-      {added ? <div className="c-toast" role="status"><span>✓</span> {added} se agregó al carrito.
+        {added ? <div className="c-toast" role="status"><span>✓</span> {added} se agregó al carrito.
         <button onClick={() => { setAdded(""); setOpen(true); }} type="button">Ver carrito</button>
-      </div> : null}
+        </div> : null}
+      </div>
     </Context.Provider>
   );
 }

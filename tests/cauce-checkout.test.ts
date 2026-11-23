@@ -3,7 +3,7 @@ import test from "node:test";
 import { createHmac } from "node:crypto";
 import { cauceProducts } from "../lib/cauce/catalog";
 import { parseCheckoutLines, quoteCheckout, safeTestCheckoutUrl, validCheckoutUuid } from "../lib/cauce/checkout";
-import { cauceProtectedWebhookUrl, createCaucePreference, getCaucePreference, isVerifiedCauceTestSeller, validateCauceProviderPayment, verifyCauceWebhookSignature } from "../lib/cauce/payments";
+import { cauceProtectedWebhookUrl, createCaucePreference, getCaucePreference, isCauceOfficialTestCard, isVerifiedCauceTestSeller, validateCauceProviderPayment, verifyCauceWebhookSignature } from "../lib/cauce/payments";
 import { sameStoredLines, visibleCauceOrderStatus } from "../lib/cauce/order-store";
 import { cauceSandboxCheckoutEnabled } from "../lib/cauce/config";
 
@@ -91,6 +91,40 @@ test("provider confirmation must match order, amount, currency and sandbox selle
     { collector_id: 999 }, { card: { first_six_digits: "450995", last_four_digits: "1111" } },
     { external_reference: "123e4567-e89b-42d3-a456-426614174001" }, { id: 5555 }, { status: "refunded" },
   ]) assert.throws(() => validateCauceProviderPayment({ ...payment, ...change }, expected));
+});
+
+test("pending and rejected test-seller payments tolerate absent card proof but never false approval", () => {
+  const expected = {
+    paymentId: "1234", orderId: "123e4567-e89b-42d3-a456-426614174000",
+    totalAmount: 74500, sellerId: "1765413554",
+  };
+  const base = {
+    id: 1234, external_reference: expected.orderId, live_mode: false,
+    collector_id: 1765413554, currency_id: "ARS", transaction_amount: 74500,
+    payment_method_id: "visa",
+  };
+  for (const status of ["pending", "in_process", "rejected", "cancelled"] as const) {
+    for (const card of [undefined, null, {}, { first_six_digits: "450995", last_four_digits: "9999" }]) {
+      const payment = { ...base, status, card };
+      assert.equal(validateCauceProviderPayment(payment, expected), status);
+      assert.equal(isCauceOfficialTestCard(payment), false);
+      for (const mismatch of [
+        { external_reference: "123e4567-e89b-42d3-a456-426614174001" },
+        { collector_id: 999 },
+        { currency_id: "USD" },
+        { transaction_amount: 1 },
+        { live_mode: undefined },
+        { id: 1111 },
+      ]) assert.throws(() => validateCauceProviderPayment({ ...payment, ...mismatch }, expected));
+    }
+  }
+  for (const card of [undefined, null, {}, { first_six_digits: "450995", last_four_digits: "9999" }]) {
+    assert.throws(() => validateCauceProviderPayment({ ...base, status: "approved", card }, expected));
+  }
+  assert.equal(validateCauceProviderPayment({
+    ...base, status: "approved",
+    card: { first_six_digits: "450995", last_four_digits: "3704" },
+  }, expected), "approved");
 });
 
 test("sandbox checkout stays closed without explicitly isolated credentials", () => {

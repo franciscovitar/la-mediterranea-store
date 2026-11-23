@@ -11,6 +11,13 @@
   --cream: #f7f6f1;
   --cream-2: #ecebe3;
   --teal: #4b5542;
+  /* Override shared La Mediterránea tokens only inside Cauce. */
+  --ink-soft: var(--c-muted);
+  --paper: #fffdfa;
+  --line: var(--c-line);
+  --line-strong: #b8bdaf;
+  --magenta-text: var(--c-olive);
+  --purple: var(--c-olive);
   background: var(--c-paper);
   color: var(--c-ink);
   min-height: 100vh;
@@ -361,6 +368,29 @@
   .c-site *, .c-site *::before, .c-site *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
+
+/* The shared cart is rendered inside the SINGLE Cauce root; never inside a
+   second min-height: 100vh wrapper after the footer. All overrides are scoped
+   so the historical La Mediterránea branding stays untouched. */
+.c-site .cart-drawer { background: #f9f8f4; color: var(--c-ink); }
+.c-site .cart-backdrop { background: rgba(30, 39, 29, .5); }
+.c-site .cart-head .eyebrow { color: var(--c-olive); font-size: 11px; }
+.c-site .cart-head h2 { color: var(--c-ink); font-weight: 400; }
+.c-site .cart-head p,
+.c-site .cart-line-top p,
+.c-site .cart-pending { color: var(--c-muted); }
+.c-site .cart-drawer .text-button { color: var(--c-olive); }
+.c-site .cart-drawer .text-button:hover { color: var(--c-ink); }
+.c-site .cart-drawer .quantity { border-color: var(--c-line); background: #fffdfa; }
+.c-site .cart-drawer .quantity button { color: var(--c-ink); background: #ecebe3; }
+.c-site .cart-drawer .quantity button:hover:not(:disabled) { color: white; background: var(--c-olive); }
+.c-site .cart-drawer .cart-foot { background: var(--c-paper); border-top-color: var(--c-line); }
+.c-site .cart-drawer .checkout-button,
+.c-site .cart-drawer .browse-button { background: var(--c-ink); border-color: var(--c-ink); color: white; }
+.c-site .cart-drawer .checkout-button:hover,
+.c-site .cart-drawer .browse-button:hover { background: var(--c-olive); border-color: var(--c-olive); }
+.c-site .cart-drawer .cart-empty > span { color: var(--c-olive); background: var(--c-sand); }
+
 /* M3 isolated purchase-review flow; the historical /checkout is untouched. */
 .c-checkout-page { padding-top: 38px; }
 .c-review-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(280px, .85fr); gap: 28px; align-items: start; }
@@ -397,3 +427,39 @@
   .c-result-actions { flex-direction: column; align-items: stretch; }
   .c-result-actions .c-button { max-width: none; }
 }
+
+
+/* Checkout Pro portfolio guide: official public test card, never collected by Cauce. */
+.c-test-payment { margin: 22px 0 8px; padding: 19px; border: 1px solid #d8d9cf; background: #f5f5ef; }
+.c-test-payment-heading strong { display: block; color: var(--c-ink); font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 23px; line-height: 1.2; margin: 9px 0; }
+.c-test-payment-heading .c-test-payment-kicker { color: var(--c-olive); font-size: 10px; font-weight: 750; letter-spacing: .14em; }
+.c-test-payment-heading p, .c-review-card .c-test-payment-hint, .c-review-card .c-test-payment-footnote { font-size: 12px; line-height: 1.55; margin: 0; }
+.c-test-payment-scenarios { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; margin: 17px 0 15px; }
+.c-test-payment-scenarios button { font-size: 11px; font-weight: 700; padding: 9px 5px; color: var(--c-olive); background: #fffdfa; border: 1px solid #d7d8cf; }
+.c-test-payment-scenarios button.is-selected { background: var(--c-olive); color: #fff; border-color: var(--c-olive); }
+.c-test-payment-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+.c-test-payment-field { display: grid; gap: 4px; min-width: 0; grid-template-columns: minmax(0,1fr) auto; align-items: center; border: 1px solid #e1e2d9; background: #fffdfa; padding: 9px; }
+.c-test-payment-number { grid-column: 1 / -1; }
+.c-test-payment-field > span { grid-column: 1 / -1; color: var(--c-muted); font-size: 10px; }
+.c-test-payment-field strong { color: var(--c-ink); font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.c-test-payment-number strong { font-size: clamp(14px, 1.5vw, 19px); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.c-test-payment-field button { border: 1px solid #cfd3c8; color: var(--c-olive); background: #f9f9f5; padding: 6px 7px; font-size: 10px; font-weight: 700; }
+.c-review-card .c-test-payment-hint { margin-top: 12px; color: #384934; }
+.c-test-payment-feedback { display: block; min-height: 16px; font-size: 11px; font-weight: 650; color: var(--c-olive); padding-top: 3px; }
+.c-review-card .c-test-payment-footnote { margin-top: 8px; }
+.c-test-payment-docs { display: inline-block; font-size: 11px; color: var(--c-olive); text-decoration: underline; text-underline-offset: 3px; margin-top: 9px; }
+@media (max-width: 420px) {
+  .c-test-payment { padding: 13px; }
+  .c-test-payment-fields { grid-template-columns: minmax(0,1fr); }
+  .c-test-payment-number { grid-column: 1; }
+  .c-test-payment-number strong { font-size: 15px; }
+}
+
+/* Mercado Pago sandbox guidance: separate test buyer account is required. */
+.c-test-payment-account {
+  margin: 15px 0 10px; padding: 13px 14px; border-left: 3px solid var(--c-olive);
+  color: var(--c-ink); background: #ebece3; font-size: 12px; line-height: 1.6;
+}
+.c-test-payment-account strong { display: block; font-size: 12px; margin-bottom: 4px; }
+.c-test-payment-account p { margin: 0 0 6px; color: var(--c-ink); }
+.c-test-payment-account p:last-child { margin-bottom: 0; }

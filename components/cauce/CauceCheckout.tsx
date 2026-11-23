@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCauceCart } from "@/components/cauce/CauceCartProvider";
+import { CauceTestPaymentGuide } from "@/components/cauce/CauceTestPaymentGuide";
 import { safeTestCheckoutUrl } from "@/lib/cauce/checkout";
 import { formatMoney } from "@/lib/products";
 
@@ -78,6 +79,7 @@ export function CauceCheckout() {
       {loading ? <p role="status">Verificando precios y stock…</p> : quote ? <>
         {quote.items.map((item) => <div className="c-review-total-row" key={item.productId}><span>{item.name} × {item.quantity}</span><span>{formatMoney(item.amount)}</span></div>)}
         <div className="c-review-total-row c-review-total"><strong>Total estimado</strong><strong>{formatMoney(quote.total)}</strong></div>
+        <CauceTestPaymentGuide />
         {quote.sandboxEnabled ? <><p className="c-review-note">Entorno de demostración · Solo tarjetas de prueba. No se aceptan pagos reales.</p>
           <button className="c-button c-button-dark" disabled={starting} onClick={() => void pay()} type="button">{starting ? "Preparando…" : "Pagar con tarjeta de prueba ↗"}</button></> :
           <p className="c-review-not-ready">El pago de prueba todavía no está disponible. Tu selección sigue guardada en el carrito.</p>}

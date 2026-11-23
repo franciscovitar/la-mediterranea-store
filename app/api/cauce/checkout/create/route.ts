@@ -1,5 +1,5 @@
 import { getCauceProducts } from "@/lib/cauce/backend";
-import { cauceCheckoutOrigin, cauceSandboxCheckoutEnabled } from "@/lib/cauce/config";
+import { cauceCheckoutOrigin, cauceSandboxCheckoutEnabledForRequest } from "@/lib/cauce/config";
 import { CauceCheckoutError, parseCheckoutLines, quoteCheckout, validCheckoutUuid } from "@/lib/cauce/checkout";
 import { checkoutHttpError, checkoutJson } from "@/lib/cauce/checkout-http";
 import { cauceOrderClient, getStoredItems, openCauceOrder, sameStoredLines } from "@/lib/cauce/order-store";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     checkSameOrigin(request);
-    if (!cauceSandboxCheckoutEnabled()) throw new CauceCheckoutError("Los pagos de prueba todavía no están habilitados.", 503);
+    if (!cauceSandboxCheckoutEnabledForRequest(request)) throw new CauceCheckoutError("Los pagos de prueba no están disponibles en este dominio.", 503);
     const body = await readJsonBody<{ lines?: unknown; requestKey?: unknown }>(request, 4096);
     const lines = parseCheckoutLines(body?.lines);
     if (!validCheckoutUuid(body?.requestKey)) throw new CauceCheckoutError("Identificador del pedido inválido.");
