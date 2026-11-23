@@ -16,11 +16,25 @@ export function CauceOrderResult() {
   const [pending, setPending] = useState(false);
   const orderId = params.get("order") ?? "";
   const key = params.get("key") ?? "";
+  const paymentId = params.get("payment_id") ?? "";
+  const successReturn = params.get("return") === "success";
 
   const refresh = useCallback(async () => {
     setPending(true);
     setError("");
     try {
+      // A successful redirect is only a hint: the server independently fetches and
+      // validates the sandbox payment, then applies the idempotent inventory RPC.
+      if (successReturn && /^\d{1,30}$/.test(paymentId)) {
+        const verification = await fetch("/api/cauce/checkout/reconcile", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, requestKey: key, paymentId }), cache: "no-store",
+        });
+        if (!verification.ok) {
+          const issue = await verification.json();
+          throw new Error(issue.error ?? "No se pudo verificar el pago de prueba.");
+        }
+      }
       const query = new URLSearchParams({ order: orderId, key });
       const response = await fetch(`/api/cauce/checkout/status?${query}`, { cache: "no-store" });
       const result = await response.json();
@@ -28,7 +42,7 @@ export function CauceOrderResult() {
       setState(result);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Error al revisar el pedido."); }
     finally { setPending(false); }
-  }, [orderId, key]);
+  }, [orderId, key, paymentId, successReturn]);
 
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => {
