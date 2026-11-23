@@ -29,3 +29,16 @@ Official documentation:
 6. Confirm history/production stores remain unchanged; never claim a test PASS without observed evidence.
 
 This PR deliberately contains no payment-provider credential changes, production deployment, checkout flag activation or public SSO changes.
+
+## UX visual audit and Checkout Pro test-buyer blocker — 2026-11-23
+
+Screenshot-backed correction: `CauceCartProvider` previously rendered two consecutive `c-site` root containers. Both inherited `min-height: 100vh`, creating a full viewport of empty page after the footer. The cart overlay and toast now live inside **one root**, so no second minimum-height block is appended. Shared cart class names had inherited La Mediterránea's magenta text and old ink tokens. Cauce-only CSS variable overrides plus scoped selectors now use the olive/cream Cauce palette; historical CSS and markup are untouched.
+
+Mercado Pago rendered **“Una de las partes con la que intentás hacer el pago es de prueba”** before card input. Per Mercado Pago official documentation, this is a mixed account-identity error (test seller vs real buyer). Checkout Pro Preferences requires a dedicated test-buyer account (not the seller, not a real user). A public card number alone cannot make test Checkout Pro self-service for arbitrary recruiters. Guidance is now shown before the pay button; no test-buyer credentials are published. To retry, sign in as a test buyer in a private Mercado Pago session, then return to the original isolated checkout. Actual provider E2E remains NOT_RUN until observed.
+
+Sources:
+- https://www.mercadopago.com.ar/developers/es/docs/checkout-pro-preferences/test-accounts
+- https://www.mercadopago.com.ar/developers/es/docs/checkout-pro-preferences/integration-test/test-purchases
+- https://www.mercadopago.com.ar/developers/es/docs/checkout-api-payments/error-messages/card-token-creation-errors
+
+Acceptance: Cauce PR Preview only, responsive/mobile screenshot and scroll QA, historical production unchanged, no actual payments initiated during this CSS/documentation repair.

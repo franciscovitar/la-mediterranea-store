@@ -24,6 +24,11 @@ export function CauceTestPaymentGuide() {
       <strong>Probá el pago en Mercado Pago</strong>
       <p>Elegí un resultado y copiá los datos al formulario seguro de Mercado Pago. No uses tarjetas reales.</p>
     </div>
+    <div className="c-test-payment-account" role="note">
+      <strong>Antes de pagar: necesitás un comprador de prueba</strong>
+      <p>La tarjeta sola no alcanza. Abrí una ventana de incógnito e iniciá sesión en Mercado Pago con una <b>cuenta compradora de prueba</b>, distinta de la cuenta vendedora. Después continuá al pago desde Cauce.</p>
+      <p>Si aparece “Una de las partes con la que intentás hacer el pago es de prueba”, cerrá la sesión de Mercado Pago: se está mezclando una cuenta real con una de prueba. Nunca uses tu cuenta personal.</p>
+    </div>
     <div className="c-test-payment-scenarios" role="group" aria-label="Resultado que querés simular">
       {CAUCE_TEST_SCENARIOS.map((item) => <button key={item.id} type="button"
         className={item.id === scenarioId ? "is-selected" : ""}
@@ -56,10 +61,14 @@ export function CauceTestPaymentGuide() {
     </div>
     <p className="c-test-payment-hint">{scenario.explanation} El resultado final lo confirma Mercado Pago y lo verifica nuestro servidor.</p>
     <span className="c-test-payment-feedback" role="status" aria-live="polite">{feedback}</span>
-    <p className="c-test-payment-footnote">Abrí el checkout en una sesión privada. Mercado Pago puede solicitar una cuenta de comprador de prueba: nunca compartas tu contraseña real.</p>
+    <p className="c-test-payment-footnote">Esta guía contiene datos de tarjetas ficticias, no credenciales de acceso a Mercado Pago. El evaluador necesita acceso autorizado a un comprador de prueba para completar el flujo.</p>
     <a className="c-test-payment-docs" target="_blank" rel="noopener noreferrer"
       href="https://www.mercadopago.com.ar/developers/es/docs/checkout-pro-preferences/integration-test/test-purchases">
       Datos oficiales de prueba · Mercado Pago ↗
+    </a>
+    <a className="c-test-payment-docs" style={{ marginLeft: 14 }} target="_blank" rel="noopener noreferrer"
+      href="https://www.mercadopago.com.ar/developers/es/docs/checkout-pro-preferences/test-accounts">
+      Cómo usar cuentas de prueba ↗
     </a>
   </section>;
 }
