@@ -3,7 +3,7 @@ import test from "node:test";
 import { createHmac } from "node:crypto";
 import { cauceProducts } from "../lib/cauce/catalog";
 import { parseCheckoutLines, quoteCheckout, safeTestCheckoutUrl, validCheckoutUuid } from "../lib/cauce/checkout";
-import { cauceProtectedWebhookUrl, createCaucePreference, getCaucePreference, isVerifiedCauceTestSeller, validateCauceProviderPayment, verifyCauceWebhookSignature } from "../lib/cauce/payments";
+import { cauceProtectedWebhookUrl, createCaucePreference, getCaucePreference, isCauceOfficialTestCard, isVerifiedCauceTestSeller, validateCauceProviderPayment, verifyCauceWebhookSignature } from "../lib/cauce/payments";
 import { sameStoredLines, visibleCauceOrderStatus } from "../lib/cauce/order-store";
 import { cauceSandboxCheckoutEnabled } from "../lib/cauce/config";
 
