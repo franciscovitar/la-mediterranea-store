@@ -109,3 +109,11 @@ The plain `npm test` script uses `tsx --test`; in some restricted local runners 
 **References rechecked 2026-11-22:** Mercado Pago Developers, Checkout Pro *Cuentas de prueba*, *Realizar compras de prueba* and Preferences API *Crear/Obtener preferencia*, plus official credential instructions for `/users/me`. The provider's actual `tags` identity response must be verified in situ; if this check is unsupported for a specific test account, keep checkout **OFF** pending another independently verifiable assertion of test-seller identity. Never weaken it by trusting the `APP_USR` prefix.
 
 **Release gates:** unit/build, authenticated staff CRUD + concurrency, SQL readback, sandbox preference, test-card approved/rejected/pending, signed webhooks, duplicate/late event, stock reconciliation, protected preview review, human approval before any broader public release. No credential-free mock test certifies these real payment scenarios.
+
+## CI y Preview del PR #19 — 2026-11-23
+
+- GitHub Actions CI para el commit de código y tests `335fa77d25c434e210469826e5934f82741de845`: **SUCCESS**. Pasaron instalación, validación del catálogo, TypeScript, tests unitarios, tests del showcase y build de producción.
+- Vercel generó un deployment Preview READY del PR para el repositorio principal, SHA `335fa77d…`.
+- También se desplegó ese SHA al proyecto aislado de Cauce con target `staging`; quedó **READY** y enlazado al Preview de la rama. GET de la portada devolvió HTTP 200 y título de Cauce; GET de `/api/cauce/catalog` devolvió HTTP 200 con 12 productos y 153 unidades.
+- El alias estable `cauce-retail-preview-genova.vercel.app` continúa apuntando al deployment de la rama anterior `feat/cauce-retail-foundation-20261121`; el deployment de este PR tiene alias propio. No se movió el alias estable.
+- Esta validación confirma build/Preview y lectura del catálogo sobre el SHA con los tests actualizados. No es prueba HTTP de pago/webhook: el checkout permanece apagado, no se envió POST al Preview protegido y no se creó ninguna compra.
