@@ -397,3 +397,30 @@
   .c-result-actions { flex-direction: column; align-items: stretch; }
   .c-result-actions .c-button { max-width: none; }
 }
+
+
+/* Checkout Pro portfolio guide: official public test card, never collected by Cauce. */
+.c-test-payment { margin: 22px 0 8px; padding: 19px; border: 1px solid #d8d9cf; background: #f5f5ef; }
+.c-test-payment-heading strong { display: block; color: var(--c-ink); font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 23px; line-height: 1.2; margin: 9px 0; }
+.c-test-payment-heading .c-test-payment-kicker { color: var(--c-olive); font-size: 10px; font-weight: 750; letter-spacing: .14em; }
+.c-test-payment-heading p, .c-review-card .c-test-payment-hint, .c-review-card .c-test-payment-footnote { font-size: 12px; line-height: 1.55; margin: 0; }
+.c-test-payment-scenarios { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; margin: 17px 0 15px; }
+.c-test-payment-scenarios button { font-size: 11px; font-weight: 700; padding: 9px 5px; color: var(--c-olive); background: #fffdfa; border: 1px solid #d7d8cf; }
+.c-test-payment-scenarios button.is-selected { background: var(--c-olive); color: #fff; border-color: var(--c-olive); }
+.c-test-payment-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+.c-test-payment-field { display: grid; gap: 4px; min-width: 0; grid-template-columns: minmax(0,1fr) auto; align-items: center; border: 1px solid #e1e2d9; background: #fffdfa; padding: 9px; }
+.c-test-payment-number { grid-column: 1 / -1; }
+.c-test-payment-field > span { grid-column: 1 / -1; color: var(--c-muted); font-size: 10px; }
+.c-test-payment-field strong { color: var(--c-ink); font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.c-test-payment-number strong { font-size: clamp(14px, 1.5vw, 19px); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.c-test-payment-field button { border: 1px solid #cfd3c8; color: var(--c-olive); background: #f9f9f5; padding: 6px 7px; font-size: 10px; font-weight: 700; }
+.c-review-card .c-test-payment-hint { margin-top: 12px; color: #384934; }
+.c-test-payment-feedback { display: block; min-height: 16px; font-size: 11px; font-weight: 650; color: var(--c-olive); padding-top: 3px; }
+.c-review-card .c-test-payment-footnote { margin-top: 8px; }
+.c-test-payment-docs { display: inline-block; font-size: 11px; color: var(--c-olive); text-decoration: underline; text-underline-offset: 3px; margin-top: 9px; }
+@media (max-width: 420px) {
+  .c-test-payment { padding: 13px; }
+  .c-test-payment-fields { grid-template-columns: minmax(0,1fr); }
+  .c-test-payment-number { grid-column: 1; }
+  .c-test-payment-number strong { font-size: 15px; }
+}
