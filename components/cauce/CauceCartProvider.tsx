@@ -113,7 +113,7 @@ export function CauceCartProvider({ children, products }: { children: React.Reac
             .filter((line) => line.quantity > 0))}
           onRemove={(key) => setCart((current) => current.filter((line) => line.key !== key))}
           onClear={() => setCart([])}
-          checkoutHref="/pedido"
+          checkoutHref="/cauce/pedido"
           checkoutButtonLabel="Revisar pedido"
           checkoutNote="Revisá cantidades y precios antes de continuar. Los pagos reales no están disponibles."
           emptyIcon="◌"

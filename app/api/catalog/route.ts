@@ -1,6 +1,13 @@
 import { noStoreJson } from "@/lib/http/request";
-import { getCauceProducts } from "@/lib/cauce/backend";
+import { getPublicCatalog } from "@/lib/integrations/supabase/public";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return noStoreJson({ products: await getCauceProducts() });
+  try {
+    return noStoreJson({ products: await getPublicCatalog() });
+  } catch (error) {
+    console.error("Supabase catalog read failed", error);
+    return noStoreJson({ error: "No se pudo leer el catálogo." }, { status: 503 });
+  }
 }

@@ -29,7 +29,7 @@ export function CatalogExplorer({ products: source, initialCategory = "Todos", i
     if (query.trim()) params.set("q", query.trim());
     if (sort !== "destacados") params.set("orden", sort);
     const search = params.toString();
-    const target = `/catalogo${search ? `?${search}` : ""}`;
+    const target = `/cauce/catalogo${search ? `?${search}` : ""}`;
     if (window.location.pathname + window.location.search !== target) window.history.replaceState(null, "", target);
   }, [category, query, sort]);
 

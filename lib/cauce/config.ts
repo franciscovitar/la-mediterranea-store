@@ -2,6 +2,11 @@ export function cauceDatabaseEnabled() {
   return process.env.CAUCE_CATALOG_SOURCE === "database";
 }
 
+/** Only the dedicated Cauce Preview opts in; the historical production app stays intact. */
+export function cauceStandaloneSiteEnabled() {
+  return process.env.CAUCE_STANDALONE_SITE === "true";
+}
+
 export function cauceMerchantEnabled() {
   return cauceDatabaseEnabled() && process.env.CAUCE_MERCHANT_ENABLED === "true";
 }

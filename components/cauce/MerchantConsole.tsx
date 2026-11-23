@@ -108,8 +108,8 @@ export function MerchantConsole({ initial }: { initial: MerchantData }) {
   const rows = data.products.filter((product) => product.active);
 
   return <div className="c-merchant-wrap">
-    <header className="c-merchant-head"><a href="/" className="c-logo">cauce<span>.</span></a>
-      <div><a href="/" target="_blank" rel="noopener noreferrer">Ver tienda ↗</a>
+    <header className="c-merchant-head"><a href="/cauce" className="c-logo">cauce<span>.</span></a>
+      <div><a href="/cauce" target="_blank" rel="noopener noreferrer">Ver tienda ↗</a>
         <button type="button" onClick={async () => { await cauceBrowserAuth().auth.signOut(); window.location.assign("/gestion"); }}>Cerrar sesión</button></div>
     </header>
     <div className="c-merchant-title"><div><span className="c-overline">Panel comercial</span><h1>Buen día, equipo.</h1><p>Catálogo, inventario y actividad de la tienda.</p></div><span className="c-merchant-live">Cauce · Gestión</span></div>

@@ -16,19 +16,19 @@ export function CauceHeader() {
           <button className="c-menu-toggle" aria-expanded={menuOpen} aria-controls="c-mobile-menu" aria-label="Abrir menú" onClick={() => setMenuOpen((value) => !value)} type="button">
             <span /><span /><span />
           </button>
-          <Link className="c-logo" href="/" aria-label="Cauce, inicio">cauce<span>.</span></Link>
+          <Link className="c-logo" href="/cauce" aria-label="Cauce, inicio">cauce<span>.</span></Link>
           <nav className="c-nav" aria-label="Navegación principal">
-            <Link href="/catalogo">Tienda</Link>
-            <Link href="/catalogo?categoria=Mesa">Mesa</Link>
-            <Link href="/catalogo?categoria=Decoraci%C3%B3n">Decoración</Link>
-            <Link href="/catalogo?categoria=Textiles">Textiles</Link>
-            <Link href="/#nosotros">Nosotros</Link>
+            <Link href="/cauce/catalogo">Tienda</Link>
+            <Link href="/cauce/catalogo?categoria=Mesa">Mesa</Link>
+            <Link href="/cauce/catalogo?categoria=Decoraci%C3%B3n">Decoración</Link>
+            <Link href="/cauce/catalogo?categoria=Textiles">Textiles</Link>
+            <Link href="/cauce#nosotros">Nosotros</Link>
           </nav>
           <div className="c-header-actions">
-            <Link className="c-icon-action" href="/catalogo" aria-label="Buscar productos" title="Buscar">
+            <Link className="c-icon-action" href="/cauce/catalogo" aria-label="Buscar productos" title="Buscar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
             </Link>
-            <Link className="c-icon-action c-saved-action" href="/favoritos" aria-label={`Guardados, ${savedCount} productos`} title="Guardados">
+            <Link className="c-icon-action c-saved-action" href="/cauce/favoritos" aria-label={`Guardados, ${savedCount} productos`} title="Guardados">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.5 8c0 5.2-8.5 11-8.5 11S3.5 13.2 3.5 8a4.5 4.5 0 0 1 8.5-2.1A4.5 4.5 0 0 1 20.5 8Z"/></svg>
               {savedCount ? <span className="c-action-count">{savedCount}</span> : null}
             </Link>
@@ -39,11 +39,11 @@ export function CauceHeader() {
           </div>
         </div>
         <nav id="c-mobile-menu" className={`c-mobile-nav ${menuOpen ? "is-open" : ""}`} aria-label="Menú móvil" inert={!menuOpen}>
-          <Link href="/catalogo" onClick={() => setMenuOpen(false)}>Todos los productos</Link>
-          <Link href="/catalogo?categoria=Mesa" onClick={() => setMenuOpen(false)}>Mesa</Link>
-          <Link href="/catalogo?categoria=Decoraci%C3%B3n" onClick={() => setMenuOpen(false)}>Decoración</Link>
-          <Link href="/catalogo?categoria=Textiles" onClick={() => setMenuOpen(false)}>Textiles</Link>
-          <Link href="/favoritos" onClick={() => setMenuOpen(false)}>Mis guardados</Link>
+          <Link href="/cauce/catalogo" onClick={() => setMenuOpen(false)}>Todos los productos</Link>
+          <Link href="/cauce/catalogo?categoria=Mesa" onClick={() => setMenuOpen(false)}>Mesa</Link>
+          <Link href="/cauce/catalogo?categoria=Decoraci%C3%B3n" onClick={() => setMenuOpen(false)}>Decoración</Link>
+          <Link href="/cauce/catalogo?categoria=Textiles" onClick={() => setMenuOpen(false)}>Textiles</Link>
+          <Link href="/cauce/favoritos" onClick={() => setMenuOpen(false)}>Mis guardados</Link>
         </nav>
       </header>
     </>

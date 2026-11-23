@@ -1,5 +1,20 @@
 # Cauce Commerce Lab · Full-stack commerce engineering (historical source: La Mediterránea Store)
 
+> **Main-safe isolation checkpoint (2026-11-23, pending PR merge):** The original
+> La Mediterránea storefront, public `/api/catalog`, checkout/admin routes and
+> root brand metadata remain unchanged when `CAUCE_STANDALONE_SITE` is absent or
+> `false`. Cauce's storefront lives at `/cauce` (catalog `/cauce/catalogo`,
+> review `/cauce/pedido`), and its public catalog API at `/api/cauce/catalog`.
+> All Cauce routes, Auth and APIs fail closed in the historical deployment.
+> The *separate, SSO-protected* `cauce-retail-preview` Vercel project alone may
+> opt in with `CAUCE_STANDALONE_SITE=true`; then `/` and existing `/catalogo`,
+> `/pedido/resultado` and `/api/catalog` URLs rewrite to Cauce for compatibility.
+> Historical checkout/admin routes are blocked **only in that Cauce Preview**.
+> This changes routing, not payment safety: keep `CAUCE_CHECKOUT_ENABLED=false`
+> by default, protect Preview, and finish abuse/concurrency/negative-payment QA
+> before any public test checkout. The approved test charge/stock verification
+> and subsequent QA are recorded in PR #18, not certified as production-ready.
+
 > **Product direction (21 Nov 2026):** Cauce is becoming a complete, company-usable fictional online store built on this actual Next.js/Supabase codebase. The browser-only `showcase/` is a historical technical simulator, **not** the target product interface. Read the [product contract](docs/PRODUCT_DIRECTION_V2.md), [proposed architecture and reuse matrix](docs/ARCHITECTURE_V2.md), and [ecommerce capability research](docs/FEATURE_RESEARCH_20261121.md).
 
 > **M1 retail foundation — deployed to isolated staging:** The Next.js routes provide Cauce's own brand, 12 fictional homeware products with optimized photos, homepage, catalog, search, category filter, sorting, product details, persistent wishlists and local cart. The [non-production staging storefront](https://cauce-retail-preview-5pegfjov7-genova.vercel.app/catalogo) was verified against the dedicated synthetic Supabase database. See [M1](docs/CAUCE_M1_IMPLEMENTATION.md) and [M2](docs/CAUCE_M2_IMPLEMENTATION.md) for checkpoint evidence.
@@ -36,7 +51,11 @@ The historical storefront read its operational catalog from Supabase. Cauce uses
 - Basic security headers plus safe 404/error states.
 - CI checks for catalog integrity, TypeScript and production build.
 
-**Current safety:** `CAUCE_LEGACY_DEV_ACCESS=true` can opt in to historical admin/checkout routes **only in development** for authorized characterization tests. It has no effect in production; those operations remain blocked. Do not point Cauce's public frontend to legacy order/payment tables. New transaction/migration work is milestones M2–M4.
+**Current safety:** The historical app remains the default. `CAUCE_STANDALONE_SITE=true`
+is permitted only in the independent Cauce staging project; it blocks historical
+checkout/admin in that Preview without removing or altering the original routes
+on `main`. The old `CAUCE_LEGACY_DEV_ACCESS` escape hatch is no longer used.
+Do not point Cauce's public frontend to historical order/payment tables.
 
 ## Run locally
 
@@ -55,6 +74,9 @@ node --test showcase/model.test.mjs
 ```
 
 If `tsx --test` cannot create IPC sockets in a restricted Linux runner, `node --import tsx --test tests/*.test.ts` exercises the same project test modules without that CLI socket.
+
+For the isolated Cauce HTTP smoke test: `CAUCE_STANDALONE_SITE=true node scripts/cauce-smoke.mjs`.
+This tests local Cauce routing without changing the historical production site.
 
 ## Runtime configuration
 

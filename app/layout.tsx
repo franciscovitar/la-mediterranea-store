@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Fredoka, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import "./cauce.css";
 
 const bodyFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -9,35 +8,40 @@ const bodyFont = Plus_Jakarta_Sans({
   variable: "--font-body",
 });
 
+const displayFont = Fredoka({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "Cauce · Objetos para vivir",
-    template: "%s · Cauce",
+    default: "La Mediterránea · Tienda oficial",
+    template: "%s · La Mediterránea",
   },
-  description: "Objetos de hogar, mesa y decoración para acompañar tus rituales cotidianos. Conocé la colección Cauce.",
+  description: "Merchandising oficial de la Orquesta-Escuela Mediterránea.",
   openGraph: {
     type: "website",
     locale: "es_AR",
-    title: "Cauce · Objetos para vivir",
-    description: "Objetos con intención, texturas que se sienten y detalles que vuelven especial lo cotidiano.",
-    images: ["/cauce/hero.webp"],
+    title: "La Mediterránea · Tienda oficial",
+    description: "Merchandising oficial de la Orquesta-Escuela Mediterránea.",
   },
   twitter: {
     card: "summary",
-    title: "Cauce · Objetos para vivir",
-    description: "Objetos con intención para tu casa.",
+    title: "La Mediterránea · Tienda oficial",
+    description: "Merchandising oficial de la Orquesta-Escuela Mediterránea.",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f7f5ef",
+  themeColor: "#fbf5ea",
   colorScheme: "light",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
-      <body className={bodyFont.variable}>{children}</body>
+      <body className={`${bodyFont.variable} ${displayFont.variable}`}>{children}</body>
     </html>
   );
 }

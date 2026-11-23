@@ -4,7 +4,7 @@ import { cauceServerAuth } from "@/lib/cauce/auth";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  if (!cauceMerchantEnabled()) return NextResponse.redirect(new URL("/", url));
+  if (!cauceMerchantEnabled()) return NextResponse.redirect(new URL("/cauce", url));
   const code = url.searchParams.get("code");
   if (!code) return NextResponse.redirect(new URL("/gestion?error=login", url));
   const client = await cauceServerAuth();

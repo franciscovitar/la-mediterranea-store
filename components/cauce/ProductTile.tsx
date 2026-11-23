@@ -12,7 +12,7 @@ export function ProductTile({ product }: { product: CauceProduct }) {
 
   return <article className="c-product-card">
     <div className="c-product-image">
-      <Link href={`/producto/${product.slug}`} aria-label={`Ver ${product.name}`}>
+      <Link href={`/cauce/producto/${product.slug}`} aria-label={`Ver ${product.name}`}>
         <Image src={product.image} alt={product.name} fill sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw" />
       </Link>
       {product.stock === 0 ? <span className="c-product-badge">Sin stock</span> : product.badge ? <span className="c-product-badge">{product.badge}</span> : null}
@@ -21,6 +21,6 @@ export function ProductTile({ product }: { product: CauceProduct }) {
       </button>
       <button className="c-quick-add" disabled={product.stock === 0} onClick={() => add(product)} type="button">{product.stock === 0 ? "Sin stock" : "+ Agregar al carrito"}</button>
     </div>
-    <div className="c-product-meta"><span>{product.category}</span><Link href={`/producto/${product.slug}`}>{product.name}</Link><strong>{formatMoney(product.price)}</strong></div>
+    <div className="c-product-meta"><span>{product.category}</span><Link href={`/cauce/producto/${product.slug}`}>{product.name}</Link><strong>{formatMoney(product.price)}</strong></div>
   </article>;
 }

@@ -65,14 +65,14 @@ export function CauceCheckout() {
 
   if (!ready) return <p className="c-merchant-muted">Cargando carrito…</p>;
   if (!lines.length) return <section className="c-review-empty"><h2>Tu carrito está vacío.</h2><p>Elegí algo de la colección para armar tu pedido.</p>
-    <Link className="c-button c-button-dark" href="/catalogo">Ver productos ↗</Link></section>;
+    <Link className="c-button c-button-dark" href="/cauce/catalogo">Ver productos ↗</Link></section>;
 
   return <div className="c-review-layout">
     <section className="c-review-card" aria-label="Productos seleccionados"><h2>Productos</h2>
       {lines.map((line) => <div className="c-review-item" key={line.key}><img src={line.image} alt="" />
         <div><h3>{line.name}</h3><p>{line.quantity} {line.quantity === 1 ? "unidad" : "unidades"}</p></div>
         <strong>{formatMoney(line.price * line.quantity)}</strong></div>)}
-      <Link className="c-text-link" href="/catalogo">Seguir explorando ↗</Link>
+      <Link className="c-text-link" href="/cauce/catalogo">Seguir explorando ↗</Link>
     </section>
     <section className="c-review-card c-review-summary" aria-label="Resumen del pedido"><h2>Resumen</h2>
       {loading ? <p role="status">Verificando precios y stock…</p> : quote ? <>

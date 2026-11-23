@@ -27,7 +27,7 @@ export default async function ProductPage({ params }: Props) {
   const fallbackRelated = related.length >= 2 ? related : cauceProducts.filter((item) => item.id !== product.id).slice(0, 4);
 
   return <main className="c-page c-product-page"><div className="c-container">
-    <div className="c-breadcrumb"><Link href="/">Inicio</Link><span>/</span><Link href="/catalogo">Tienda</Link><span>/</span><span>{product.name}</span></div>
+    <div className="c-breadcrumb"><Link href="/cauce">Inicio</Link><span>/</span><Link href="/cauce/catalogo">Tienda</Link><span>/</span><span>{product.name}</span></div>
     <div className="c-pdp-grid">
       <div className="c-pdp-photo"><Image priority src={product.image} alt={product.name} fill sizes="(max-width: 800px) 100vw, 55vw" /></div>
       <div className="c-pdp-info"><span className="c-overline">Cauce · {product.category}</span><h1>{product.name}</h1><strong className="c-pdp-price">{formatMoney(product.price)}</strong>
@@ -39,7 +39,7 @@ export default async function ProductPage({ params }: Props) {
         <div className="c-pdp-note"><span aria-hidden="true">✳</span><p>Una pieza elegida para acompañar tus espacios y tus rutinas.</p></div>
       </div>
     </div>
-    <section className="c-related"><div className="c-section-header"><div><span className="c-overline">Para seguir descubriendo</span><h2>También te puede gustar.</h2></div><Link className="c-text-link" href="/catalogo">Ver la colección ↗</Link></div>
+    <section className="c-related"><div className="c-section-header"><div><span className="c-overline">Para seguir descubriendo</span><h2>También te puede gustar.</h2></div><Link className="c-text-link" href="/cauce/catalogo">Ver la colección ↗</Link></div>
       <div className="c-grid">{fallbackRelated.map((item) => <ProductTile key={item.id} product={item} />)}</div>
     </section>
   </div></main>;

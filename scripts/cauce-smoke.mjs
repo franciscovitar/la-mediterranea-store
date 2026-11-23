@@ -9,6 +9,10 @@ const port = 31571;
 const base = `http://127.0.0.1:${port}`;
 const screenshotDir = process.env.CAUCE_QA_DIR;
 
+if (process.env.CAUCE_STANDALONE_SITE !== "true") {
+  throw new Error("Cauce smoke requires CAUCE_STANDALONE_SITE=true; historical storefront is the default.");
+}
+
 // Some restricted CI-like workspaces disable OS network-interface enumeration.
 // This changes Next's local logging only, not any application networking behavior.
 const startCode = `require("node:os").networkInterfaces = () => ({lo:[{address:"127.0.0.1",family:"IPv4",internal:true}]});process.argv=["node","next","start","-p","${port}","-H","127.0.0.1"];require("next/dist/bin/next")`;
@@ -43,6 +47,8 @@ try {
   assert.match(home, /Hacé espacio/);
   assert.doesNotMatch(home, /La Mediterránea|Orquesta-Escuela/);
   await probe("/catalogo", 200);
+  await probe("/cauce", 200);
+  await probe("/cauce/catalogo", 200);
   await probe("/catalogo?categoria=Mesa&q=taza", 200);
   await probe("/producto/taza-bruma", 200);
   await probe("/favoritos", 200);
@@ -51,6 +57,9 @@ try {
   await probe("/producto/no-existe", 404);
   const json = await (await probe("/api/catalog", 200)).json();
   assert.equal(json.products.length, 12);
+  const cauceApi = await (await probe("/api/cauce/catalog", 200)).json();
+  assert.equal(cauceApi.products.length, 12);
+  await probe("/checkout", 200); // Historical checkout is unavailable on isolated Cauce Preview.
   await probe("/api/checkout/create", 503, "POST");
   await probe("/api/admin/orders", 503);
   await probe("/api/webhooks/mercadopago", 503, "POST");

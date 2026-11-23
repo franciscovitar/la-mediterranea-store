@@ -72,6 +72,6 @@ export function CauceOrderResult() {
       <><h2>Consultando el pedido</h2><p>Esperá mientras verificamos su estado.</p></>}
     {error && <p role="alert" className="c-merchant-feedback is-error">{error}</p>}
     <div className="c-result-actions"><button className="c-button c-button-dark" type="button" disabled={pending} onClick={() => void refresh(true)}>{pending ? "Consultando…" : "Actualizar estado"}</button>
-      <Link className="c-text-link" href="/catalogo">Volver a la tienda ↗</Link></div>
+      <Link className="c-text-link" href="/cauce/catalogo">Volver a la tienda ↗</Link></div>
   </section>;
 }

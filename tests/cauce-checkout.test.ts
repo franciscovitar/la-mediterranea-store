@@ -158,6 +158,9 @@ test("verified test seller permits Checkout Pro URLs only for its own preference
         const notify = new URL(preference.notification_url);
         assert.equal(notify.searchParams.get("x-vercel-protection-bypass"), "test-isolated-preview-bypass-secret");
         assert.equal(preference.back_urls.success.includes("x-vercel-protection-bypass"), false);
+        assert.equal(new URL(preference.back_urls.success).pathname, "/cauce/pedido/resultado");
+        assert.equal(new URL(preference.back_urls.pending).pathname, "/cauce/pedido/resultado");
+        assert.equal(new URL(preference.back_urls.failure).pathname, "/cauce/pedido/resultado");
       }
       return Response.json({ id, collector_id: 1234567890,
         init_point: `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${id}` });

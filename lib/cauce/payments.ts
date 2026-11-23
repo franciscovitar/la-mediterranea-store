@@ -88,7 +88,7 @@ export async function createCaucePreference(input: {
   orderId: string; requestKey: string; expiresAt: string; origin: string;
   items: Array<{ productId: string; name: string; quantity: number; unitPrice: number }>;
 }) {
-  const returnUrl = `${input.origin}/pedido/resultado?order=${input.orderId}&key=${input.requestKey}`;
+  const returnUrl = `${input.origin}/cauce/pedido/resultado?order=${input.orderId}&key=${input.requestKey}`;
   const result = await mpRequest("/checkout/preferences", {
     method: "POST",
     body: JSON.stringify({
