@@ -126,11 +126,19 @@ export async function getCaucePayment(id: string) {
 export function validateCauceProviderPayment(payment: Record<string, unknown>, expected: {
   paymentId: string; orderId: string; totalAmount: number;
 }) {
-  if (String(payment.id) !== expected.paymentId || payment.external_reference !== expected.orderId ||
-      payment.live_mode !== false || payment.currency_id !== "ARS" ||
-      typeof payment.transaction_amount !== "number" ||
-      !Number.isSafeInteger(payment.transaction_amount) || payment.transaction_amount !== expected.totalAmount ||
-      !["approved", "pending", "in_process", "rejected", "cancelled"].includes(String(payment.status))) {
+  const checks = {
+    paymentId: String(payment.id) === expected.paymentId,
+    externalReference: payment.external_reference === expected.orderId,
+    testMode: payment.live_mode === false,
+    currency: payment.currency_id === "ARS",
+    integerAmount: typeof payment.transaction_amount === "number" && Number.isSafeInteger(payment.transaction_amount),
+    amount: payment.transaction_amount === expected.totalAmount,
+    status: ["approved", "pending", "in_process", "rejected", "cancelled"].includes(String(payment.status)),
+  };
+  const failed = Object.entries(checks).filter(([, valid]) => !valid).map(([field]) => field);
+  if (failed.length > 0) {
+    // Only field names: no customer, card, payment or secret data in diagnostic logs.
+    console.warn("CAUCE_TEST_PAYMENT_VERIFICATION_FAILED", { fields: failed });
     throw new CauceCheckoutError("El pago no coincide con este pedido de prueba.", 422);
   }
   return payment.status as "approved" | "pending" | "in_process" | "rejected" | "cancelled";
