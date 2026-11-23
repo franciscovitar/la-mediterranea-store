@@ -16,23 +16,26 @@ export function CauceOrderResult() {
   const [pending, setPending] = useState(false);
   const orderId = params.get("order") ?? "";
   const key = params.get("key") ?? "";
-  const paymentId = params.get("payment_id") ?? "";
-  const successReturn = params.get("return") === "success";
+  const suppliedPaymentId = params.get("payment_id") ?? "";
+  const paymentId = /^\d{1,30}$/.test(suppliedPaymentId) ? suppliedPaymentId : "";
+  const returnHint = ["success", "pending", "failure"].includes(params.get("return") ?? "");
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (verifyWithProvider = false) => {
     setPending(true);
     setError("");
+    let verificationError = "";
     try {
-      // A successful redirect is only a hint: the server independently fetches and
-      // validates the sandbox payment, then applies the idempotent inventory RPC.
-      if (successReturn && /^\d{1,30}$/.test(paymentId)) {
+      // Every Mercado Pago return is only a hint. Approved, pending and failed
+      // payments all require server-side verification; missing IDs use the
+      // exact order reference on Mercado Pago, never the browser's claim.
+      if (returnHint || verifyWithProvider) {
         const verification = await fetch("/api/cauce/checkout/reconcile", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, requestKey: key, paymentId }), cache: "no-store",
+          body: JSON.stringify({ orderId, requestKey: key, ...(paymentId ? { paymentId } : {}) }), cache: "no-store",
         });
         if (!verification.ok) {
           const issue = await verification.json();
-          throw new Error(issue.error ?? "No se pudo verificar el pago de prueba.");
+          verificationError = issue.error ?? "No se pudo verificar el pago de prueba.";
         }
       }
       const query = new URLSearchParams({ order: orderId, key });
@@ -40,11 +43,12 @@ export function CauceOrderResult() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "No se encontró el pedido.");
       setState(result);
+      if (result.status !== "paid_test" && verificationError) setError(verificationError);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Error al revisar el pedido."); }
     finally { setPending(false); }
-  }, [orderId, key, paymentId, successReturn]);
+  }, [orderId, key, paymentId, returnHint]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { void refresh(false); }, [refresh]);
   useEffect(() => {
     if (state?.status === "paid_test" || state?.status === "failed_test" || state?.status === "cancelled" || state?.status === "expired_test") {
       sessionStorage.removeItem("cauce-checkout-request-v1");
@@ -67,7 +71,7 @@ export function CauceOrderResult() {
       <p>{presentation.description}</p><p>Total registrado: <strong>{formatMoney(state.total)}</strong></p></> :
       <><h2>Consultando el pedido</h2><p>Esperá mientras verificamos su estado.</p></>}
     {error && <p role="alert" className="c-merchant-feedback is-error">{error}</p>}
-    <div className="c-result-actions"><button className="c-button c-button-dark" type="button" disabled={pending} onClick={() => void refresh()}>{pending ? "Consultando…" : "Actualizar estado"}</button>
+    <div className="c-result-actions"><button className="c-button c-button-dark" type="button" disabled={pending} onClick={() => void refresh(true)}>{pending ? "Consultando…" : "Actualizar estado"}</button>
       <Link className="c-text-link" href="/catalogo">Volver a la tienda ↗</Link></div>
   </section>;
 }

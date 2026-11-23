@@ -9,7 +9,19 @@
 | Core repository | Next.js + TypeScript, Supabase database/storage, RLS-backed admin, checkout validation and a prepared payment adapter | The code paths and repository tests, not live payment processing |
 | Local/CI checks | Catalog validation, TypeScript, checkout/authorization helper tests, build | Reproducible checks of the verified paths; not production traffic |
 | Public `showcase/` | Static HTML/CSS/JS with a pure in-memory commerce state machine | Product semantics and explicit negative states, **not** the real Supabase backend |
-| External provider | Mercado Pago adapter and signed webhook boundary prepared | Integration design; no production payment is asserted |
+| Isolated Cauce Retail Preview | Next.js storefront, Supabase catalog/admin, Checkout Pro test seller, signed-webhook boundary and server reconciliation | **One observed approved fictitious payment**, one durable order and inventory debit, followed by an idempotent replay; no real charge or production launch |
+| Original provider adapter | The historical shop's separate Mercado Pago adapter and signed webhook boundary | Legacy integration design; remains disabled in Cauce and is not proof of a Cauce payment |
+
+## Isolated Cauce Retail — actual bounded integration evidence
+
+The feature branch and [Draft PR #18](https://github.com/franciscovitar/la-mediterranea-store/pull/18) contain Cauce's own `lib/cauce/*`, `app/api/cauce/checkout/*`, product/merchant UI and the isolated Supabase schemas in `supabase/cauce/`.
+
+- A real Checkout Pro **test-card** purchase was observed with a Mercado Pago `test_user` seller and the official test Visa. The provider confirmed ARS 28,500, operation `191136243454`. Server reconciliation independently verified seller/collector, test-card fingerprint, external reference, amount and currency.
+- Cauce's own order changed to `paid_test`. Database readback showed **one** Vela Ámbar decrement (17→16), stock total 154→153, one payment event and one stock-movement ledger row. Reprocessing the same payment kept all counts and stock unchanged.
+- Unlike the static showcase, this evidence came from an isolated Preview and an actual provider response. It is **not** a production payment, recruiter-public launch, observed signed webhook delivery or certification of rejection/pending cases end to end.
+- Official Mercado Pago Checkout Pro guidance allows production-mode credentials of an actual **test seller**, which may result in `live_mode=true` while using fictitious funds. Cauce therefore requires both the verified seller identity and official test-card evidence; it never treats the `live_mode` field or `APP_USR` prefix alone as proof of a test charge.
+- Signed webhook validation and provider-search fallback for missing return IDs are implemented; test credentials do not send automatic payment notifications. Local/mock and database-transaction QA must be distinguished from actual provider/browser traces. See [M3 evidence and limitations](CAUCE_M3_IMPLEMENTATION.md).
+- The Preview remains behind SSO with new checkout creation **disabled**. No real funds, Production deploy or merge to protected `main` are authorized. Public recruiter access requires separate approval and anti-abuse review.
 
 ## The challenging part is authority, not product cards
 
@@ -60,5 +72,6 @@ The showcase implements these as intentionally **synthetic invariants** in `show
 3. Simulate an approved callback twice. Check that only one debit happens.
 4. Toggle administrator and try editing stock, both allowed and forbidden.
 5. Inspect `lib/commerce/checkout.ts`, `lib/commerce/idempotency.ts`, `lib/admin/auth.ts`, `supabase/migrations`, `tests/`, `showcase/model.test.mjs` and the CI workflow.
+6. For the additional real test-only Cauce Retail implementation, inspect `lib/cauce/payments.ts`, `app/api/cauce/checkout/`, `supabase/cauce/M4_PROVEN_TEST_CHECKOUT.sql` and the Draft PR's documented SQL readbacks. Keep those observations separate from the public showcase's synthetic UI.
 
 This is a portfolio demonstration of full-stack engineering and reasoning under failure. It is not a claim of independent production operation, successful sales, or customer delivery.

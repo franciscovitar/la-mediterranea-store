@@ -123,6 +123,46 @@ export async function getCaucePayment(id: string) {
   return mpRequest(`/v1/payments/${id}`);
 }
 
+/**
+ * Checkout Pro can return without payment_id, and test credentials do not emit
+ * actual webhook notifications. Search only the stored order's exact reference;
+ * ambiguity must not mark a purchase paid or alter stock automatically.
+ */
+export function oneCauceSearchPaymentId(search: unknown): string | null {
+  if (!search || typeof search !== "object" || Array.isArray(search)) {
+    throw new CauceCheckoutError("Respuesta de búsqueda de pagos inválida.", 502);
+  }
+  const data = search as Record<string, unknown>;
+  const paging = data.paging && typeof data.paging === "object" && !Array.isArray(data.paging)
+    ? data.paging as Record<string, unknown> : {};
+  const total = paging.total;
+  if (!Number.isSafeInteger(total) || (total as number) < 0 || !Array.isArray(data.results)) {
+    throw new CauceCheckoutError("Respuesta de búsqueda de pagos inválida.", 502);
+  }
+  if (total === 0 && data.results.length === 0) return null;
+  if (total !== 1 || data.results.length !== 1) {
+    throw new CauceCheckoutError("Hay más de un pago para este intento. Se requiere revisión.", 409);
+  }
+  const result = data.results[0];
+  const id = result && typeof result === "object" && !Array.isArray(result)
+    ? String((result as Record<string, unknown>).id ?? "") : "";
+  if (!/^\d{1,30}$/.test(id)) throw new CauceCheckoutError("ID de pago inválido.", 502);
+  return id;
+}
+
+export async function getCaucePaymentByOrderReference(orderId: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) {
+    throw new CauceCheckoutError("Referencia de pedido inválida.", 400);
+  }
+  const query = new URLSearchParams({
+    sort: "date_created", criteria: "desc", external_reference: orderId,
+    limit: "2", offset: "0",
+  });
+  const search = await mpRequest(`/v1/payments/search?${query}`);
+  const id = oneCauceSearchPaymentId(search);
+  return id ? { id, payment: await getCaucePayment(id) } : null;
+}
+
 // Official Mercado Pago Argentina test cards. We verify both the method and
 // the exposed BIN/last four; no full card details are stored or logged.
 const officialTestCards: Record<string, readonly string[]> = {
