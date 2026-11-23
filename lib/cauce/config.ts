@@ -49,3 +49,14 @@ export function caucePublicConfig() {
   }
   return { url, key };
 }
+
+/** Host-level opt-in: a Preview-wide flag must never activate a different branch's URL. */
+export function cauceSandboxCheckoutEnabledForRequest(request: Request) {
+  if (!cauceSandboxCheckoutEnabled()) return false;
+  const expectedOrigin = cauceCheckoutOrigin();
+  if (!expectedOrigin) return false;
+  const requestUrl = new URL(request.url);
+  const host = request.headers.get("host") || requestUrl.host;
+  const proto = request.headers.get("x-forwarded-proto") || requestUrl.protocol.slice(0, -1);
+  return proto === "https" && `https://${host.toLowerCase()}` === expectedOrigin;
+}

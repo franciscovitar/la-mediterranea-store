@@ -6,7 +6,7 @@ test("Cauce test checkout status is hidden outside the isolated site", async () 
   const original = process.env.CAUCE_STANDALONE_SITE;
   try {
     delete process.env.CAUCE_STANDALONE_SITE;
-    const response = await GET();
+    const response = await GET(new Request("https://cauce-portfolio-demo.vercel.app/api/cauce/checkout/demo-status"));
     assert.equal(response.status, 404);
     assert.equal(response.headers.get("cache-control"), "no-store");
   } finally {
@@ -28,11 +28,13 @@ test("status reveals only sanitized test configuration, not credentials or provi
       VERCEL_AUTOMATION_BYPASS_SECRET: "synthetic-test-automation-bypass-secret",
       CAUCE_CHECKOUT_ORIGIN: "https://cauce-portfolio-demo.vercel.app",
     });
-    const response = await GET();
+    const response = await GET(new Request("https://cauce-portfolio-demo.vercel.app/api/cauce/checkout/demo-status"));
     assert.equal(response.status, 200);
     const body = await response.json();
     assert.deepEqual(body, { provider: "mercadopago", mode: "test-only", configured: true });
     assert.equal(response.headers.get("cache-control"), "no-store");
+    const wrongHost = await GET(new Request("https://another-preview.vercel.app/api/cauce/checkout/demo-status"));
+    assert.deepEqual(await wrongHost.json(), { provider: "mercadopago", mode: "test-only", configured: false });
     const json = JSON.stringify(body);
     for (const secret of ["synthetic-db-key", "APP_USR-", "automation-bypass", "1765413554"]) {
       assert.equal(json.includes(secret), false);
